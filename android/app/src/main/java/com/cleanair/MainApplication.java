@@ -4,6 +4,7 @@ import android.app.Application;
 import android.content.Context;
 import com.facebook.react.PackageList;
 import com.facebook.react.ReactApplication;
+import com.horcrux.svg.SvgPackage;
 import com.nuttawutmalee.RCTBluetoothSerial.RCTBluetoothSerialPackage;
 import com.nuttawutmalee.RCTBluetoothSerial.*;
 import com.facebook.react.ReactInstanceManager;

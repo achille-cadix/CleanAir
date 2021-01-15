@@ -1,23 +1,5 @@
 import React from 'react';
-import {
-    SafeAreaView,
-    StyleSheet,
-    ScrollView,
-    View,
-    Text,
-    StatusBar,
-    FlatList,
-    Button,
-    TouchableHighlight
-} from 'react-native';
-
-import {
-    Header,
-    LearnMoreLinks,
-    Colors,
-    DebugInstructions,
-    ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+import { StyleSheet, ScrollView, View, Text, FlatList, Button, TouchableHighlight } from 'react-native';
 import Toast from "react-native-toast";
 import BluetoothSerial, {
     withSubscription

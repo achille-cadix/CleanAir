@@ -11,7 +11,6 @@ import { Buffer } from "buffer";
 class HomePage extends React.Component {
     constructor(props) {
         super(props);
-        this.events = null;
         this.state = {
             isEnabled: false,
             device: null,
@@ -24,7 +23,6 @@ class HomePage extends React.Component {
         };
     }
     async componentDidMount() {
-        this.events = this.props.events;
         try {
             const [isEnabled, devices] = await Promise.all([
                 BluetoothSerial.isEnabled(),
@@ -42,54 +40,6 @@ class HomePage extends React.Component {
         } catch (e) {
             Toast.showShortBottom(e.message);
         }
-
-        this.events.on("bluetoothEnabled", () => {
-            Toast.showShortBottom("Bluetooth enabled");
-            this.setState({ isEnabled: true });
-        });
-
-        this.events.on("bluetoothDisabled", () => {
-            Toast.showShortBottom("Bluetooth disabled");
-            this.setState({ isEnabled: false });
-        });
-
-        this.events.on("connectionSuccess", ({ device }) => {
-            if (device) {
-                Toast.showShortBottom(
-                    `Device ${device.name}<${device.id}> has been connected`
-                );
-            }
-        });
-
-        this.events.on("connectionFailed", ({ device }) => {
-            if (device) {
-                Toast.showShortBottom(
-                    `Failed to connect with device ${device.name}<${device.id}>`
-                );
-            }
-        });
-
-        this.events.on("connectionLost", ({ device }) => {
-            if (device) {
-                Toast.showShortBottom(
-                    `Device ${device.name}<${device.id}> connection has been lost`
-                );
-            }
-        });
-
-        this.events.on("data", result => {
-            if (result) {
-                const { id, data } = result;
-                console.log(`Data from device ${id} : ${data}`);
-            }
-        });
-
-        this.events.on("error", e => {
-            if (e) {
-                console.log(`Error: ${e.message}`);
-                Toast.showShortBottom(e.message);
-            }
-        });
     }
 
     requestEnable = () => async () => {
