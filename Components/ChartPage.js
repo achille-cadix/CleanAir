@@ -25,10 +25,33 @@ import BluetoothSerial, {
 import { Buffer } from "buffer";
 
 class ChartPage extends React.Component {
+    constructor(props) {
+        super(props);
+    }
+
+    requestDataFromHC05 = async => {
+        this.write(this.props.navigation.state.params.hc05ID, "8");
+        BluetoothSerial.readFromDevice(this.props.navigation.state.params.hc05ID).then((data) => {
+            Toast.showShortBottom(data);
+        });
+    };
+
+    write = async (id, message) => {
+        try {
+            await BluetoothSerial.device(id).write(message);
+        } catch (e) {
+            Toast.showShortBottom(e.message);
+        }
+    };
+
     render() {
         return (
             <Text>
                 Chart
+                <Button
+                    title="Read data from HC05"
+                    onPress={this.requestDataFromHC05}
+                />
             </Text>
         )
     }

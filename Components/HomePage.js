@@ -1,23 +1,6 @@
 import React from 'react';
-import {
-    SafeAreaView,
-    StyleSheet,
-    ScrollView,
-    View,
-    Text,
-    StatusBar,
-    FlatList,
-    Button,
-    TouchableHighlight
-} from 'react-native';
-
-import {
-    Header,
-    LearnMoreLinks,
-    Colors,
-    DebugInstructions,
-    ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+import { StyleSheet, View, Text, Button, TouchableHighlight, TouchableOpacity } from 'react-native';
+import { Colors } from 'react-native/Libraries/NewAppScreen';
 import Toast from "react-native-toast";
 import BluetoothSerial, {
     withSubscription
@@ -37,6 +20,7 @@ class HomePage extends React.Component {
             processing: false,
             unPairedDevices: [],
             hc05ID: null,
+            connected: false
         };
     }
     async componentDidMount() {
@@ -44,7 +28,7 @@ class HomePage extends React.Component {
         try {
             const [isEnabled, devices] = await Promise.all([
                 BluetoothSerial.isEnabled(),
-                //BluetoothSerial.list(),
+                BluetoothSerial.list(),
             ]);
 
             this.setState({
@@ -260,6 +244,7 @@ class HomePage extends React.Component {
                         ...connected,
                         connected: true
                     },
+                    connected: true,
                     devices: devices.map(v => {
                         if (v.id === connected.id) {
                             return {
@@ -274,7 +259,7 @@ class HomePage extends React.Component {
                 }));
             } else {
                 Toast.showShortBottom(`Failed to connect to device <${id}>`);
-                this.setState({ processing: false });
+                this.setState({ processing: false, connected: false });
             }
         } catch (e) {
             Toast.showShortBottom(e.message);
@@ -327,36 +312,30 @@ class HomePage extends React.Component {
     };
 
     connectToHC05 = async () => {
-        let hc05ID = this.state.devices.find(x => x.name === "HC-05").id;
-        this.connect(hc05ID);
-        this.setState({
-            hc05ID: hc05ID
-        })
+        try {
+            let hc05ID = this.state.devices.find(x => x.name === "HC-05").id;
+            this.setState({
+                hc05ID: hc05ID
+            });
+            await this.connect(hc05ID);
+            if (this.state.connected) {
+                this.props.navigation.navigate("ChartPage", { hc05ID: this.state.hc05ID });
+            }
+            else {
+                Toast.showShortBottom("Unable to connect to HC05 module");
+            }
+        }
+        catch (e) {
+            Toast.showShortBottom(e.message);
+        }
     }
 
     render() {
         return (
             <View>
-                <Text>Hello</Text>
-                <Button
-                    title="Print devices"
-                    onPress={() => { console.log(this.state) }}
-                />
                 <Button
                     title="Connect to HC-05"
                     onPress={this.connectToHC05}
-                />
-                <Button
-                    title="Read data from HC-05"
-                    onPress={this.requestDataFromHC05}
-                />
-                <FlatList
-                    data={Object.keys(this.state.devices)}
-                    render={({ item }) => (
-                        <Text>
-                            {item}
-                        </Text>
-                    )}
                 />
             </View>
         )
