@@ -1,10 +1,23 @@
 import React from 'react';
-import { SafeAreaView, StyleSheet, View, Text, Button, TouchableHighlight } from 'react-native';
+import { SafeAreaView, StyleSheet, View, Text, Button, PermissionsAndroid } from 'react-native';
 import { VictoryLine, VictoryChart, VictoryTheme, VictoryLabel } from "victory-native";
 import Toast from "react-native-toast";
 import BluetoothSerial, {
     withSubscription
 } from "react-native-bluetooth-serial-next";
+import Geolocation from '@react-native-community/geolocation';
+import axios from 'axios';
+
+const url = "https://enjl220ffgif30o.m.pipedream.net";
+
+
+
+const requestLocationPermission = async () => {
+    const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
+    if (!granted === PermissionsAndroid.RESULTS.GRANTED) {
+        console.log("Position permission denied");
+    }
+};
 
 class ChartPage extends React.Component {
 
@@ -12,7 +25,8 @@ class ChartPage extends React.Component {
         super(props);
         this.state = {
             data: [],
-            startTime: null
+            startTime: null,
+            location: null
         }
     }
 
@@ -20,13 +34,31 @@ class ChartPage extends React.Component {
         this.write(this.props.navigation.state.params.hc05ID, "8");
         BluetoothSerial.readFromDevice(this.props.navigation.state.params.hc05ID).then((response) => {
             if (response && response > 0 && response < 300) {
-                let receptionTime = this.state.data.length + 1;
+                let position = this.state.data.length + 1;
+                let receptionTime = new Date();
                 this.setState({
-                    data: [...this.state.data, { x: receptionTime, y: parseInt(response) }]
-                })
+                    data: [...this.state.data, { x: position, y: parseInt(response) }]
+                });
+                this.sendDataToURL(parseInt(response), receptionTime)
             }
         });
     };
+
+    sendDataToURL = async (sensorData, timestamp) => {
+        await Geolocation.getCurrentPosition((position) => {
+            this.setState({ location: position })
+        },
+            (error) => console.log(new Date(), error),
+            { enableHighAccuracy: false, timeout: 5000 });
+        let body = {
+            PM25: sensorData,
+            timestamp: timestamp,
+            longitude: this.state.location.coords.longitude,
+            latitude: this.state.location.coords.latitude,
+        };
+        console.log(body);
+        axios({ method: 'post', url: url, data: body });
+    }
 
     write = async (id, message) => {
         try {
@@ -36,12 +68,18 @@ class ChartPage extends React.Component {
         }
     };
 
-    componentDidMount() {
+    async componentDidMount() {
+        await requestLocationPermission();
+        await Geolocation.getCurrentPosition((position) => {
+            this.setState({ location: position })
+        },
+            (error) => console.log(new Date(), error),
+            { enableHighAccuracy: false, timeout: 5000 });
         const startTime = new Date();
         this.write(this.props.navigation.state.params.hc05ID, "8");
         BluetoothSerial.readFromDevice(this.props.navigation.state.params.hc05ID).then((response) => {
             this.setState({
-                data: [...this.state.data, { x: 0, y: response }],
+                data: [...this.state.data, { x: 0, y: response, timestamp: startTime }],
                 startTime: startTime
             });
         })
@@ -52,13 +90,6 @@ class ChartPage extends React.Component {
     render() {
         return (
             <View>
-                <Text>
-                    Chart
-                <Button
-                        title="Read data from HC05"
-                        onPress={this.requestDataFromHC05}
-                    />
-                </Text>
                 <View style={styles.container}>
                     <VictoryChart width={350} theme={VictoryTheme.material}>
                         <VictoryLine
@@ -71,6 +102,10 @@ class ChartPage extends React.Component {
                         />
                     </VictoryChart>
                 </View>
+                <Button
+                    title="Log location"
+                    onPress={this.sendDataToURL}
+                />
             </View>
         )
     }

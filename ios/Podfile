@@ -10,6 +10,10 @@ target 'CleanAir' do
 
   pod 'RNSVG', :path => '../node_modules/react-native-svg'
 
+  pod 'react-native-geolocation', :path => '../node_modules/@react-native-community/geolocation'
+
+  pod 'ReactNativeGetLocation', :path => '../node_modules/react-native-get-location'
+
   target 'CleanAirTests' do
     inherit! :complete
     # Pods for testing
