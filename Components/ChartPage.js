@@ -7,6 +7,7 @@ import BluetoothSerial, {
 } from "react-native-bluetooth-serial-next";
 import Geolocation from '@react-native-community/geolocation';
 import axios from 'axios';
+import BackgroundTimer from 'react-native-background-timer';
 
 const url = "https://enjl220ffgif30o.m.pipedream.net";
 
@@ -84,7 +85,9 @@ class ChartPage extends React.Component {
             });
         })
         this.requestDataFromHC05();
-        setInterval(this.requestDataFromHC05, 2000);
+        const intervalId = BackgroundTimer.setInterval(() => {
+            this.requestDataFromHC05();
+        }, 2000);
     }
 
     render() {

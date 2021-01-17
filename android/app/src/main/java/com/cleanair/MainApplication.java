@@ -5,6 +5,8 @@ import android.content.Context;
 import com.facebook.react.PackageList;
 import com.facebook.react.ReactApplication;
 import com.horcrux.svg.SvgPackage;
+import com.ocetnik.timer.BackgroundTimerPackage;
+import com.horcrux.svg.SvgPackage;
 import com.github.douglasjunior.reactNativeGetLocation.ReactNativeGetLocationPackage;
 import com.horcrux.svg.SvgPackage;
 import com.reactnativecommunity.geolocation.GeolocationPackage;
