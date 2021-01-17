@@ -12,7 +12,6 @@ import BackgroundTimer from 'react-native-background-timer';
 const url = "https://enjl220ffgif30o.m.pipedream.net";
 
 
-
 const requestLocationPermission = async () => {
     const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
     if (!granted === PermissionsAndroid.RESULTS.GRANTED) {
@@ -27,7 +26,8 @@ class ChartPage extends React.Component {
         this.state = {
             data: [],
             startTime: null,
-            location: null
+            location: null,
+            valuesReceived: 1
         }
     }
 
@@ -35,30 +35,66 @@ class ChartPage extends React.Component {
         this.write(this.props.navigation.state.params.hc05ID, "8");
         BluetoothSerial.readFromDevice(this.props.navigation.state.params.hc05ID).then((response) => {
             if (response && response > 0 && response < 300) {
-                let position = this.state.data.length + 1;
-                let receptionTime = new Date();
+                let receptionTime = +new Date;
                 this.setState({
-                    data: [...this.state.data, { x: position, y: parseInt(response) }]
+                    valuesReceived: this.state.valuesReceived + 1,
+                    data: [...this.state.data, { x: this.state.valuesReceived, y: parseInt(response), timestamp: receptionTime }]
                 });
-                this.sendDataToURL(parseInt(response), receptionTime)
+                try {
+                    this.sendDataToURL(this.state.data[this.state.data.length - 1]);
+                }
+                catch (e) {
+                    console.log(e);
+                }
             }
+            this.limitToOneMinute();
+            this.sendMeanValueToURL();
         });
     };
 
-    sendDataToURL = async (sensorData, timestamp) => {
+    limitToOneMinute = async () => {
+        if (this.state.data.length > 1) {
+            let lastData = this.state.data[this.state.data.length - 1];
+            newData = this.state.data.filter(x => { if (lastData.timestamp - x.timestamp < 30000) { return x } })
+            this.setState({ data: newData });
+        }
+    }
+
+    sendDataToURL = async (data) => {
         await Geolocation.getCurrentPosition((position) => {
-            this.setState({ location: position })
+            this.setState({ location: position });
         },
             (error) => console.log(new Date(), error),
             { enableHighAccuracy: false, timeout: 5000 });
         let body = {
-            PM25: sensorData,
-            timestamp: timestamp,
+            PM25: data.y,
+            timestamp: data.timestamp,
             longitude: this.state.location.coords.longitude,
             latitude: this.state.location.coords.latitude,
         };
         console.log(body);
         axios({ method: 'post', url: url, data: body });
+    }
+
+    sendMeanValueToURL = async () => {
+        if (this.state.valuesReceived % 5 === 0) {
+            await Geolocation.getCurrentPosition((position) => {
+                this.setState({ location: position });
+            },
+                (error) => console.log(new Date(), error),
+                { enableHighAccuracy: false, timeout: 5000 });
+            let cleanedData = this.state.data.filter(x => { if (typeof (x.y) == 'number') { return x } });
+            let meanPM25 = cleanedData.reduce((acc, e) => (acc + e.y), 0) / cleanedData.length;
+            let timestamp = +new Date();
+            let body = {
+                PM25Mean: meanPM25,
+                timestamp: timestamp,
+                longitude: this.state.location.coords.longitude,
+                latitude: this.state.location.coords.latitude,
+            };
+            console.log(body);
+            axios({ method: 'post', url: url, data: body });
+        }
     }
 
     write = async (id, message) => {
