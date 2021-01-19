@@ -8,6 +8,7 @@ import BluetoothSerial, {
 import Geolocation from '@react-native-community/geolocation';
 import axios from 'axios';
 import BackgroundTimer from 'react-native-background-timer';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const url = "https://enjl220ffgif30o.m.pipedream.net";
 
@@ -142,8 +143,8 @@ class ChartPage extends React.Component {
                     </VictoryChart>
                 </View>
                 <Button
-                    title="Log location"
-                    onPress={this.sendDataToURL}
+                    title="Changer les paramètres"
+                    onPress={() => this.props.navigation.navigate("SettingsPage")}
                 />
             </View>
         )
