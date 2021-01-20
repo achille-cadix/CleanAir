@@ -28,7 +28,19 @@ class ChartPage extends React.Component {
             data: [],
             startTime: null,
             location: null,
-            valuesReceived: 1
+            valuesReceived: 1,
+            number: 15,
+            age: 30
+        }
+        this.defaultValues = { "@setting_number": 15, "@setting_age": 30 };
+    }
+
+    getMyStringValue = async (item) => {
+        try {
+            stringValue = await AsyncStorage.getItem(item)
+            return stringValue != null ? stringValue : this.defaultValues[item]
+        } catch (e) {
+            console.log(e)
         }
     }
 
@@ -106,7 +118,21 @@ class ChartPage extends React.Component {
         }
     };
 
+    updateSettings = (number, age) => {
+        this.setState({
+            data: [],
+            valuesReceived: 1,
+            number: number,
+            age: age
+        });
+        this.forceUpdate();
+    }
+
     async componentDidMount() {
+        setting_number = await this.getMyStringValue("@setting_number");
+        setting_age = await this.getMyStringValue("@setting_age");
+        this.setState({ number: setting_number });
+        this.setState({ age: setting_age })
         await requestLocationPermission();
         await Geolocation.getCurrentPosition((position) => {
             this.setState({ location: position })
@@ -144,8 +170,10 @@ class ChartPage extends React.Component {
                 </View>
                 <Button
                     title="Changer les paramètres"
-                    onPress={() => this.props.navigation.navigate("SettingsPage")}
+                    onPress={() => this.props.navigation.navigate("SettingsPage", { defaultValues: this.defaultValues, updateSettings: this.updateSettings })}
                 />
+                <Text>Age maximal des données : {this.state.age}</Text>
+                <Text>Nombre maximal de données : {this.state.number}</Text>
             </View>
         )
     }
