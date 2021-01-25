@@ -228,11 +228,7 @@ class HomePage extends React.Component {
 
     connectToHC05 = async () => {
         try {
-            let hc05ID = this.state.hc05ID ?? this.state.devices.find(x => x.name === "HC-05").id;
-            this.setState({
-                hc05ID: hc05ID
-            });
-            await this.connect(hc05ID);
+            await this.connect(this.state.hc05ID);
             if (this.state.connected) {
                 this.props.navigation.navigate("ChartPage", { hc05ID: this.state.hc05ID });
             }
@@ -276,7 +272,19 @@ class HomePage extends React.Component {
                     connected: false
                 }))
             });
-            this.pairToHC05();
+            let hc05ID = this.state.devices.find(x => x.name === "HC-05")?.id;
+            this.setState({
+                hc05ID: hc05ID
+            });
+            if (hc05ID) {
+
+                this.connectToHC05();
+
+            }
+            else {
+                Toast.showShortBottom('HC05 not paired or found, please wait for automatic connection')
+                this.pairToHC05();
+            }
         } catch (e) {
             Toast.showShortBottom(e.message);
         }
