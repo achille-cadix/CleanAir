@@ -1,7 +1,5 @@
 // Navigation/Navigation.js
 
-import React from 'react';
-import { StyleSheet, Image } from 'react-native';
 import { createAppContainer } from 'react-navigation';
 import { createStackNavigator } from 'react-navigation-stack';
 import ChartPage from '../Components/ChartPage';

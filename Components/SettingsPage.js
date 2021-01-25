@@ -57,8 +57,8 @@ class SettingsPage extends React.Component {
             <View>
                 <View>
                     <Text>
-                        Nombre de données maximales à afficher
-                </Text>
+                        Envoyer des données toutes les :
+                    </Text>
                     <Slider
                         value={Number(this.state.number)}
                         onValueChange={(value) => this.setState({ number: value })}

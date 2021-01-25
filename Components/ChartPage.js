@@ -1,5 +1,5 @@
 import React from 'react';
-import { SafeAreaView, StyleSheet, View, Text, Button, PermissionsAndroid } from 'react-native';
+import { StyleSheet, View, Text, Button, PermissionsAndroid } from 'react-native';
 import { VictoryLine, VictoryChart, VictoryTheme, VictoryLabel } from "victory-native";
 import Toast from "react-native-toast";
 import BluetoothSerial, {
@@ -68,7 +68,7 @@ class ChartPage extends React.Component {
     limitToOneMinute = async () => {
         if (this.state.data.length > 1) {
             let lastData = this.state.data[this.state.data.length - 1];
-            newData = this.state.data.filter(x => { if (lastData.timestamp - x.timestamp < 30000) { return x } })
+            newData = this.state.data.filter(x => { if (lastData.timestamp - x.timestamp < this.state.age * 1000) { return x } })
             this.setState({ data: newData });
         }
     }
@@ -90,7 +90,7 @@ class ChartPage extends React.Component {
     }
 
     sendMeanValueToURL = async () => {
-        if (this.state.valuesReceived % 5 === 0) {
+        if ((this.state.valuesReceived % this.state.number) === 0) {
             await Geolocation.getCurrentPosition((position) => {
                 this.setState({ location: position });
             },
@@ -173,7 +173,7 @@ class ChartPage extends React.Component {
                     onPress={() => this.props.navigation.navigate("SettingsPage", { defaultValues: this.defaultValues, updateSettings: this.updateSettings })}
                 />
                 <Text>Age maximal des données : {this.state.age}</Text>
-                <Text>Nombre maximal de données : {this.state.number}</Text>
+                <Text>Envoi des données toutes les : {this.state.number}</Text>
             </View>
         )
     }

@@ -1,11 +1,11 @@
 import React from 'react';
-import { StyleSheet, View, Text, Button, TouchableHighlight, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text, Button, TouchableOpacity, FlatList } from 'react-native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import Toast from "react-native-toast";
 import BluetoothSerial, {
     withSubscription
 } from "react-native-bluetooth-serial-next";
-import { Buffer } from "buffer";
+import { TapGestureHandler } from 'react-native-gesture-handler';
 
 
 class HomePage extends React.Component {
@@ -17,29 +17,10 @@ class HomePage extends React.Component {
             devices: [],
             scanning: false,
             processing: false,
-            unPairedDevices: [],
+            unpairedDevices: [],
             hc05ID: null,
             connected: false
         };
-    }
-    async componentDidMount() {
-        try {
-            const [isEnabled, devices] = await Promise.all([
-                BluetoothSerial.isEnabled(),
-                BluetoothSerial.list(),
-            ]);
-
-            this.setState({
-                isEnabled,
-                devices: devices.map(device => ({
-                    ...device,
-                    paired: true,
-                    connected: false
-                }))
-            });
-        } catch (e) {
-            Toast.showShortBottom(e.message);
-        }
     }
 
     requestEnable = () => async () => {
@@ -130,10 +111,9 @@ class HomePage extends React.Component {
 
     pairDevice = async id => {
         this.setState({ processing: true });
-
         try {
-            const paired = await BluetoothSerial.pairDevice(id);
 
+            const paired = await BluetoothSerial.pairDevice(id);
             if (paired) {
                 Toast.showShortBottom(
                     `Device ${paired.name}<${paired.id}> paired successfully`
@@ -246,24 +226,9 @@ class HomePage extends React.Component {
         }
     };
 
-    requestDataFromHC05 = async => {
-        this.write(this.state.hc05ID, "8");
-        BluetoothSerial.readFromDevice(this.state.hc05ID).then((data) => {
-            Toast.showShortBottom(data);
-        });
-    };
-
-    write = async (id, message) => {
-        try {
-            await BluetoothSerial.device(id).write(message);
-        } catch (e) {
-            Toast.showShortBottom(e.message);
-        }
-    };
-
     connectToHC05 = async () => {
         try {
-            let hc05ID = this.state.devices.find(x => x.name === "HC-05").id;
+            let hc05ID = this.state.hc05ID ?? this.state.devices.find(x => x.name === "HC-05").id;
             this.setState({
                 hc05ID: hc05ID
             });
@@ -276,6 +241,43 @@ class HomePage extends React.Component {
             }
         }
         catch (e) {
+            Toast.showShortBottom("HC05 not found or paired, check if it is turned on, or wait for pairing");
+        }
+    }
+
+    pairToHC05 = async () => {
+        if (this.state.hc05ID === null || this.state.hc05ID === undefined) {
+            await this.discoverUnpairedDevices();
+            let hc05ID = this.state.unpairedDevices.find(x => x.name === "HC-05")?.id;
+            if (hc05ID) {
+                await this.pairDevice(hc05ID);
+                this.setState({ hc05ID: hc05ID });
+                this.connectToHC05();
+            }
+            else {
+                Toast.showShortBottom("HC05 not found during scan, re-trying")
+                this.pairToHC05();
+            }
+        }
+    }
+
+    async componentDidMount() {
+        try {
+            const [isEnabled, devices] = await Promise.all([
+                BluetoothSerial.isEnabled(),
+                BluetoothSerial.list(),
+            ]);
+
+            this.setState({
+                isEnabled,
+                devices: devices.map(device => ({
+                    ...device,
+                    paired: true,
+                    connected: false
+                }))
+            });
+            this.pairToHC05();
+        } catch (e) {
             Toast.showShortBottom(e.message);
         }
     }
@@ -283,6 +285,14 @@ class HomePage extends React.Component {
     render() {
         return (
             <View>
+                <FlatList
+                    data={this.state.unpairedDevices}
+                    renderItem={
+                        (item) => {
+                            <Text>{item}</Text>
+                        }
+                    }
+                />
                 <Button
                     title="Connect to HC-05"
                     onPress={this.connectToHC05}
