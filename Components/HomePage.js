@@ -1,11 +1,10 @@
 import React from 'react';
-import { StyleSheet, View, Text, Button, TouchableOpacity, FlatList } from 'react-native';
+import { StyleSheet, View, Text, Button } from 'react-native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import Toast from "react-native-toast";
 import BluetoothSerial, {
     withSubscription
 } from "react-native-bluetooth-serial-next";
-import { TapGestureHandler } from 'react-native-gesture-handler';
 
 
 class HomePage extends React.Component {
@@ -230,10 +229,11 @@ class HomePage extends React.Component {
         try {
             await this.connect(this.state.hc05ID);
             if (this.state.connected) {
-                this.props.navigation.navigate("ChartPage", { hc05ID: this.state.hc05ID });
+                this.props.navigation.navigate("ChartPage", { hc05ID: this.state.hc05ID, connect: this.connect });
             }
             else {
                 Toast.showShortBottom("Unable to connect to HC05 module");
+                this.connectToHC05();
             }
         }
         catch (e) {
@@ -277,12 +277,10 @@ class HomePage extends React.Component {
                 hc05ID: hc05ID
             });
             if (hc05ID) {
-
                 this.connectToHC05();
-
             }
             else {
-                Toast.showShortBottom('HC05 not paired or found, please wait for automatic connection')
+                Toast.showShortBottom('HC05 not paired or found, please wait for automatic connection');
                 this.pairToHC05();
             }
         } catch (e) {
@@ -293,14 +291,6 @@ class HomePage extends React.Component {
     render() {
         return (
             <View>
-                <FlatList
-                    data={this.state.unpairedDevices}
-                    renderItem={
-                        (item) => {
-                            <Text>{item}</Text>
-                        }
-                    }
-                />
                 <Button
                     title="Connect to HC-05"
                     onPress={this.connectToHC05}

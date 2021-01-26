@@ -30,7 +30,8 @@ class ChartPage extends React.Component {
             location: null,
             valuesReceived: 1,
             number: 15,
-            age: 30
+            age: 30,
+            unansweredCalls: 0
         }
         this.defaultValues = { "@setting_number": 15, "@setting_age": 30 };
     }
@@ -44,28 +45,84 @@ class ChartPage extends React.Component {
         }
     }
 
-    requestDataFromHC05 = async => {
-        this.write(this.props.navigation.state.params.hc05ID, "8");
-        BluetoothSerial.readFromDevice(this.props.navigation.state.params.hc05ID).then((response) => {
-            if (response && response > 0 && response < 300) {
-                let receptionTime = +new Date;
-                this.setState({
-                    valuesReceived: this.state.valuesReceived + 1,
-                    data: [...this.state.data, { x: this.state.valuesReceived, y: parseInt(response), timestamp: receptionTime }]
-                });
-                try {
-                    this.sendDataToURL(this.state.data[this.state.data.length - 1]);
-                }
-                catch (e) {
-                    console.log(e);
-                }
+    requestDataFromHC05 = async () => {
+        if (this.state.unansweredCalls > 5) {
+            const connected = await BluetoothSerial.device(this.props.navigation.state.params.hc05ID).connect();
+            console.log('trying to reconnect')
+            if (connected) {
+                this.setState({ unansweredCalls: 0 });
             }
-            this.limitToOneMinute();
-            this.sendMeanValueToURL();
-        });
+        }
+        else {
+            this.write(this.props.navigation.state.params.hc05ID, "8");
+            BluetoothSerial.readFromDevice(this.props.navigation.state.params.hc05ID).then((response) => {
+                if (response && response > 0 && response < 300) {
+                    let receptionTime = +new Date;
+                    this.setState({
+                        unansweredCalls: 0,
+                        valuesReceived: this.state.valuesReceived + 1,
+                        data: [...this.state.data, { x: this.state.valuesReceived, y: parseFloat(response), timestamp: receptionTime }]
+                    });
+                    try {
+                        this.sendDataToURL(this.state.data[this.state.data.length - 1]);
+                        this.sendMeanValueToURL();
+                    }
+                    catch (e) {
+                        console.log(e);
+                    }
+
+                }
+                else {
+                    console.log('no response')
+                    this.setState({ unansweredCalls: this.state.unansweredCalls + 1 });
+                }
+                this.limitToTime();
+            });
+        }
     };
 
-    limitToOneMinute = async () => {
+    connect = async (id) => {
+        this.setState({ processing: true });
+
+        try {
+            const connected = await BluetoothSerial.device(id).connect();
+
+            if (connected) {
+                Toast.showShortBottom(
+                    `Connected to device ${connected.name}<${connected.id}>`
+                );
+
+                this.setState(({ devices, device }) => ({
+                    processing: false,
+                    device: {
+                        ...device,
+                        ...connected,
+                        connected: true
+                    },
+                    connected: true,
+                    devices: devices.map(v => {
+                        if (v.id === connected.id) {
+                            return {
+                                ...v,
+                                ...connected,
+                                connected: true
+                            };
+                        }
+
+                        return v;
+                    })
+                }));
+            } else {
+                Toast.showShortBottom(`Failed to connect to device <${id}>`);
+                this.setState({ processing: false, connected: false });
+            }
+        } catch (e) {
+            Toast.showShortBottom(e.message);
+            this.setState({ processing: false });
+        }
+    };
+
+    limitToTime = async () => {
         if (this.state.data.length > 1) {
             let lastData = this.state.data[this.state.data.length - 1];
             newData = this.state.data.filter(x => { if (lastData.timestamp - x.timestamp < this.state.age * 1000) { return x } })
@@ -90,7 +147,7 @@ class ChartPage extends React.Component {
     }
 
     sendMeanValueToURL = async () => {
-        if ((this.state.valuesReceived % this.state.number) === 0) {
+        if ((this.state.valuesReceived % this.state.number) === 0 && this.state.data.length >= this.state.number) {
             await Geolocation.getCurrentPosition((position) => {
                 this.setState({ location: position });
             },
@@ -98,7 +155,7 @@ class ChartPage extends React.Component {
                 { enableHighAccuracy: false, timeout: 5000 });
             let cleanedData = this.state.data.filter(x => { if (typeof (x.y) == 'number') { return x } });
             let meanPM25 = cleanedData.reduce((acc, e) => (acc + e.y), 0) / cleanedData.length;
-            let timestamp = +new Date();
+            let timestamp = this.state.data[this.state.data.length - 1]?.timestamp;
             let body = {
                 PM25Mean: meanPM25,
                 timestamp: timestamp,
