@@ -34,7 +34,9 @@ Si tout s'est bien passé, l'environnement est prêt à être lancé.
  
  Brancher le téléphone en USB à l'ordinateur. On peut vérifier qu'il est bien détécté en utilisant la ligne de commande *adb devices* qui doit donner la liste des téléphones Android branchés sur l'ordinateur
  
- Pour lancer le code, il suffit alors d'utiliser la ligne de commande (quand on est situé dans le répertoire qui correspond à l'application) *react-native run-android*.
+ Lancer un serveur de test depuis l'ordinateur (quand on est situé dans le répertoire qui correspond à l'application) à l'aide de la commande *react-native start*
+ 
+ Lancer une seconde invite de commande (encore une fois dans le bon dossier), cette fois pour envoyer le code vers le téléphone à l'aide de la commande  *react-native run-android*.
  
  Au bout d'un certain temps (en général entre 1 et 5 minutes), et si l'écran du téléphone est allumé, une application devrait s'ouvrir d'elle même.
  
