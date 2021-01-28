@@ -20,7 +20,7 @@ ADB qui permet le débogage USB depuis un ordinateur : https://www.xda-developer
 
 Node.JS et NPM qui permettent l'execution de code JavaScript : https://nodejs.org/en/
 
-Une fois NPM installé il faut installer les commandes de React Native. Il suffit de lancer l'invite de commande windows et utiliser la commade : *npm install -g expo-cli*
+Une fois NPM installé il faut installer les commandes de React Native. Il suffit de lancer l'invite de commande windows et utiliser la commade : *npm install -g react-native-cli*
 
 ## Téléchargement et préparation de l'environnement
 
