@@ -81,47 +81,6 @@ class ChartPage extends React.Component {
         }
     };
 
-    connect = async (id) => {
-        this.setState({ processing: true });
-
-        try {
-            const connected = await BluetoothSerial.device(id).connect();
-
-            if (connected) {
-                Toast.showShortBottom(
-                    `Connected to device ${connected.name}<${connected.id}>`
-                );
-
-                this.setState(({ devices, device }) => ({
-                    processing: false,
-                    device: {
-                        ...device,
-                        ...connected,
-                        connected: true
-                    },
-                    connected: true,
-                    devices: devices.map(v => {
-                        if (v.id === connected.id) {
-                            return {
-                                ...v,
-                                ...connected,
-                                connected: true
-                            };
-                        }
-
-                        return v;
-                    })
-                }));
-            } else {
-                Toast.showShortBottom(`Failed to connect to device <${id}>`);
-                this.setState({ processing: false, connected: false });
-            }
-        } catch (e) {
-            Toast.showShortBottom(e.message);
-            this.setState({ processing: false });
-        }
-    };
-
     limitToTime = async () => {
         if (this.state.data.length > 1) {
             let lastData = this.state.data[this.state.data.length - 1];
