@@ -1,6 +1,6 @@
 import React from 'react';
 import Slider from '@react-native-community/slider';
-import { StyleSheet, View, Text, Button } from 'react-native';
+import { StyleSheet, View, Text, Button, ImageBackground } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from "react-native-toast";
 
@@ -54,46 +54,76 @@ class SettingsPage extends React.Component {
 
     render() {
         return (
-            <View>
-                <View>
-                    <Text>
+            <ImageBackground style={styles.image} source={require('../assets/pictures/background_image.png')}>
+                <View styles={styles.container}>
+                    <Text style={styles.textWhite}>
                         Envoyer des données toutes les :
                     </Text>
                     <Slider
                         value={Number(this.state.number)}
+                        style={styles.slider}
                         onValueChange={(value) => this.setState({ number: value })}
                         minimumValue={5}
                         maximumValue={30}
                         step={1}
                     />
-                    <Text>
+                    <Text style={styles.textWhite}>
                         {this.state.number}
                     </Text>
                 </View>
                 <View>
-                    <Text>
+                    <Text style={styles.textWhite} >
                         Age maximal des données
                 </Text>
                     <Slider
                         value={Number(this.state.age)}
+                        style={styles.slider}
                         onValueChange={(value) => this.setState({ age: value })}
                         minimumValue={5}
                         maximumValue={60}
                         step={1}
                     />
-                    <Text>
+                    <Text style={styles.textWhite}>
                         {this.state.age}
                     </Text>
-                </View>
-                <View>
                     <Button
+                        style={styles.button}
+                        color="#80cc24"
                         title="Enregistrer les paramètres"
                         onPress={() => this.handleLeave()}
                     />
                 </View>
-            </View>
+            </ImageBackground>
         )
     }
 }
+
+const styles = StyleSheet.create({
+    image: {
+        flex: 1,
+        resizeMode: "cover",
+        justifyContent: "center",
+        alignItems: 'center'
+    },
+    slider: {
+        color: "#80cc24",
+        width: 250
+    },
+    container: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#f5fcff"
+    },
+    textWhite: {
+        color: '#ffffff',
+        fontFamily: 'sharetech',
+        fontSize: 20
+    },
+    button: {
+        marginTop: 300
+    }
+});
+
 
 export default SettingsPage

@@ -1,6 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Text, Button } from 'react-native';
-import { Colors } from 'react-native/Libraries/NewAppScreen';
+import { StyleSheet, View, Text, Button, ImageBackground, TouchableOpacity, Image } from 'react-native';
 import Toast from "react-native-toast";
 import BluetoothSerial, {
     withSubscription
@@ -290,57 +289,54 @@ class HomePage extends React.Component {
 
     render() {
         return (
-            <View>
-                <Button
-                    title="Connect to HC-05"
-                    onPress={this.connectToHC05}
-                />
-            </View>
+            <ImageBackground style={styles.image} source={require('../assets/pictures/background_image.png')}>
+                <View style={{ flex: 1, flexDirection: 'row', alignItems: 'flex-end' }}>
+                    <TouchableOpacity
+                        onPress={this.connectToHC05}
+                        style={styles.touchableOpacity}
+                    >
+                        <View style={styles.touchableInside}>
+                            <Image style={styles.pmImage} source={require('../assets/pictures/PMSensor.png')} />
+                            <Text style={styles.textTitle}>Connect to HC-05</Text>
+                        </View>
+                    </TouchableOpacity>
+                </View>
+            </ImageBackground>
         )
     }
-
-
-
-
 }
 
 const styles = StyleSheet.create({
-    scrollView: {
-        backgroundColor: Colors.lighter,
+    pmImage: {
+        flex: 1,
+        alignSelf: 'center'
     },
-    engine: {
-        position: 'absolute',
-        right: 0,
+    image: {
+        flex: 1,
+        resizeMode: "cover",
+        justifyContent: "center",
+        alignItems: 'center',
+        flexDirection: 'column'
     },
-    body: {
-        backgroundColor: Colors.white,
+    touchableInside: {
+        flex: 1,
+        //backgroundColor: "#80cc24",
     },
-    sectionContainer: {
-        marginTop: 32,
-        paddingHorizontal: 24,
+    touchableOpacity: {
+        flex: 1,
+        alignSelf: 'center',
+        alignItems: 'center',
+        //backgroundColor: "#80cc24",
+        justifyContent: 'center',
+        flexDirection: 'row'
     },
-    sectionTitle: {
-        fontSize: 24,
-        fontWeight: '600',
-        color: Colors.black,
-    },
-    sectionDescription: {
-        marginTop: 8,
-        fontSize: 18,
-        fontWeight: '400',
-        color: Colors.dark,
-    },
-    highlight: {
-        fontWeight: '700',
-    },
-    footer: {
-        color: Colors.dark,
-        fontSize: 12,
-        fontWeight: '600',
-        padding: 4,
-        paddingRight: 12,
-        textAlign: 'right',
-    },
+    textTitle: {
+        color: '#ffffff',
+        fontFamily: 'sharetech',
+        fontSize: 30,
+        flex: 1,
+        alignSelf: 'center'
+    }
 });
 
 export default HomePage;

@@ -35,3 +35,13 @@ allprojects {
         maven { url 'https://www.jitpack.io' }
     }
 }
+subprojects { project -> 
+  afterEvaluate {
+        if((project.plugins.hasPlugin('android') || project.plugins.hasPlugin('android-library'))) {
+            android {
+                compileSdkVersion rootProject.ext.compileSdkVersion
+                buildToolsVersion rootProject.ext.buildToolsVersion
+            }
+        }
+    }
+}

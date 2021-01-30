@@ -1,6 +1,6 @@
 import React from 'react';
-import { StyleSheet, View, Text, Button, PermissionsAndroid } from 'react-native';
-import { VictoryLine, VictoryChart, VictoryTheme, VictoryLabel } from "victory-native";
+import { StyleSheet, View, Text, Button, PermissionsAndroid, ImageBackground } from 'react-native';
+import { VictoryAxis, VictoryChart, VictoryTheme, VictoryLabel, VictoryArea } from "victory-native";
 import Toast from "react-native-toast";
 import BluetoothSerial, {
     withSubscription
@@ -171,36 +171,83 @@ class ChartPage extends React.Component {
 
     render() {
         return (
-            <View>
-                <View style={styles.container}>
-                    <VictoryChart width={350} theme={VictoryTheme.material}>
-                        <VictoryLine
-                            data={this.state.data}
-                            interpolation="natural"
-                            domain={{ y: [0, 300] }}
-                            labels={({ datum }) => datum.y}
-                            labelComponent={<VictoryLabel dy={-20} />}
+            <ImageBackground style={styles.image} source={require('../assets/pictures/background_image.png')}>
+                <Text style={styles.textWhite}>Proportion de particules PM2.5 : {this.state?.data[this.state.data.length - 1]?.y} µg/m³</Text>
+                <VictoryChart style={styles.chart} theme={VictoryTheme.material}>
+                    <VictoryAxis
+                        tickLabelComponent={<VictoryLabel dy={0} dx={10} angle={55} />}
+                        style={{
+                            axis: {
+                                stroke: 'white'  //CHANGE COLOR OF X-AXIS
+                            },
+                            tickLabels: {
+                                fill: 'white' //CHANGE COLOR OF X-AXIS LABELS
+                            },
+                            grid: {
+                                stroke: 'white', //CHANGE COLOR OF X-AXIS GRID LINES
+                                strokeDasharray: '7',
+                            }
+                        }}
+                    />
+                    <VictoryAxis
+                        dependentAxis
+                        tickFormat={(y) => y}
+                        style={{
+                            axis: {
+                                stroke: 'white'  //CHANGE COLOR OF Y-AXIS
+                            },
+                            tickLabels: {
+                                fill: 'white' //CHANGE COLOR OF Y-AXIS LABELS
+                            },
+                            grid: {
+                                stroke: 'white', //CHANGE COLOR OF Y-AXIS GRID LINES
+                                strokeDasharray: '7',
+                            }
+                        }}
+                    />
+                    <VictoryArea
+                        data={this.state.data}
+                        interpolation="natural"
+                        domain={{ y: [0, 300] }}
+                        labels={({ datum }) => datum.y}
+                        labelComponent={<VictoryLabel dy={-20} style={{ fill: 'white' }} />}
+                        style={{ data: { fill: "#80cc24" } }}
 
-                        />
-                    </VictoryChart>
-                </View>
+                    />
+                </VictoryChart>
                 <Button
                     title="Changer les paramètres"
+                    color="#80cc24"
                     onPress={() => this.props.navigation.navigate("SettingsPage", { defaultValues: this.defaultValues, updateSettings: this.updateSettings })}
                 />
-                <Text>Age maximal des données : {this.state.age}</Text>
-                <Text>Envoi des données toutes les : {this.state.number}</Text>
-            </View>
+                <Text style={styles.textWhite}>Age maximal des données : {this.state.age}</Text>
+                <Text style={styles.textWhite}>Envoi des données toutes les : {this.state.number}</Text>
+            </ImageBackground>
         )
     }
 }
 
 const styles = StyleSheet.create({
+    image: {
+        flex: 1,
+        resizeMode: "cover",
+        justifyContent: "center",
+        alignItems: 'center'
+    },
     container: {
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
         backgroundColor: "#f5fcff"
+    },
+    chart: {
+        flex: 1,
+    },
+    textWhite: {
+        color: '#ffffff',
+        fontFamily: 'sharetech',
+        fontSize: 20,
+        padding: 10
     }
 });
 
