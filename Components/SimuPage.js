@@ -20,7 +20,7 @@ const requestLocationPermission = async () => {
     }
 };
 
-class ChartPage extends React.Component {
+class SimuPage extends React.Component {
 
     constructor(props) {
         super(props);
@@ -45,40 +45,47 @@ class ChartPage extends React.Component {
         }
     }
 
-    requestDataFromHC05 = async () => {
-        if (this.state.unansweredCalls > 5) {
-            const connected = await BluetoothSerial.device(this.props.navigation.state.params.hc05ID).connect();
-            console.log('trying to reconnect')
-            if (connected) {
-                this.setState({ unansweredCalls: 0 });
-            }
+    generateFakeData = async () => {
+        let fakeData = (Math.random() * 255).toFixed(2);
+        let receptionTime = +new Date;
+        this.setState({
+            unansweredCalls: 0,
+            valuesReceived: this.state.valuesReceived + 1,
+            data: [...this.state.data, { x: this.state.valuesReceived, y: parseFloat(fakeData), timestamp: receptionTime }]
+        });
+        try {
+            this.sendDataToURL(this.state.data[this.state.data.length - 1]);
+            this.sendMeanValueToURL();
         }
-        else {
-            this.write(this.props.navigation.state.params.hc05ID, "8");
-            BluetoothSerial.readFromDevice(this.props.navigation.state.params.hc05ID).then((response) => {
-                if (response && response > 0 && response < 300) {
-                    let receptionTime = +new Date;
-                    this.setState({
-                        unansweredCalls: 0,
-                        valuesReceived: this.state.valuesReceived + 1,
-                        data: [...this.state.data, { x: this.state.valuesReceived, y: parseFloat(response), timestamp: receptionTime }]
-                    });
-                    try {
-                        this.sendDataToURL(this.state.data[this.state.data.length - 1]);
-                        this.sendMeanValueToURL();
-                    }
-                    catch (e) {
-                        console.log(e);
-                    }
+        catch (e) {
+            console.log(e);
+        }
+        this.limitToTime();
+        /*
+        this.write(this.props.navigation.state.params.hc05ID, "8");
+        BluetoothSerial.readFromDevice(this.props.navigation.state.params.hc05ID).then((response) => {
+            if (response && response > 0 && response < 300) {
+                let receptionTime = +new Date;
+                this.setState({
+                    unansweredCalls: 0,
+                    valuesReceived: this.state.valuesReceived + 1,
+                    data: [...this.state.data, { x: this.state.valuesReceived, y: parseFloat(response), timestamp: receptionTime }]
+                });
+                try {
+                    this.sendDataToURL(this.state.data[this.state.data.length - 1]);
+                    this.sendMeanValueToURL();
+                }
+                catch (e) {
+                    console.log(e);
+                }
 
-                }
-                else {
-                    console.log('no response')
-                    this.setState({ unansweredCalls: this.state.unansweredCalls + 1 });
-                }
-                this.limitToTime();
-            });
-        }
+            }
+            else {
+                console.log('no response')
+                this.setState({ unansweredCalls: this.state.unansweredCalls + 1 });
+            }
+            this.limitToTime();
+        });*/
     };
 
     limitToTime = async () => {
@@ -126,14 +133,6 @@ class ChartPage extends React.Component {
         }
     }
 
-    write = async (id, message) => {
-        try {
-            await BluetoothSerial.device(id).write(message);
-        } catch (e) {
-            Toast.showShortBottom(e.message);
-        }
-    };
-
     updateSettings = (number, age) => {
         this.setState({
             data: [],
@@ -156,16 +155,15 @@ class ChartPage extends React.Component {
             (error) => console.log(new Date(), error),
             { enableHighAccuracy: false, timeout: 5000 });
         const startTime = new Date();
-        this.write(this.props.navigation.state.params.hc05ID, "8");
         BluetoothSerial.readFromDevice(this.props.navigation.state.params.hc05ID).then((response) => {
             this.setState({
                 data: [...this.state.data, { x: 0, y: response, timestamp: startTime }],
                 startTime: startTime
             });
         })
-        this.requestDataFromHC05();
+        this.generateFakeData();
         const intervalId = BackgroundTimer.setInterval(() => {
-            this.requestDataFromHC05();
+            this.generateFakeData();
         }, 2000);
     }
 
@@ -251,4 +249,4 @@ const styles = StyleSheet.create({
     }
 });
 
-export default ChartPage
+export default SimuPage

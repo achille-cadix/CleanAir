@@ -5,6 +5,7 @@ import { createStackNavigator } from 'react-navigation-stack';
 import ChartPage from '../Components/ChartPage';
 import HomePage from '../Components/HomePage'
 import SettingsPage from '../Components/SettingsPage';
+import SimuPage from '../Components/SimuPage';
 
 const PageNavigator = createStackNavigator({
     HomePage: {
@@ -15,6 +16,12 @@ const PageNavigator = createStackNavigator({
     },
     ChartPage: {
         screen: ChartPage,
+        navigationOptions: {
+            headerShown: false
+        }
+    },
+    SimuPage: {
+        screen: SimuPage,
         navigationOptions: {
             headerShown: false
         }

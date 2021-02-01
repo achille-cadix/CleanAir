@@ -55,22 +55,6 @@ class SettingsPage extends React.Component {
     render() {
         return (
             <ImageBackground style={styles.image} source={require('../assets/pictures/background_image.png')}>
-                <View styles={styles.container}>
-                    <Text style={styles.textWhite}>
-                        Envoyer des données toutes les :
-                    </Text>
-                    <Slider
-                        value={Number(this.state.number)}
-                        style={styles.slider}
-                        onValueChange={(value) => this.setState({ number: value })}
-                        minimumValue={5}
-                        maximumValue={30}
-                        step={1}
-                    />
-                    <Text style={styles.textWhite}>
-                        {this.state.number}
-                    </Text>
-                </View>
                 <View>
                     <Text style={styles.textWhite} >
                         Age maximal des données
@@ -86,6 +70,23 @@ class SettingsPage extends React.Component {
                     <Text style={styles.textWhite}>
                         {this.state.age}
                     </Text>
+
+                    <View styles={styles.container}>
+                        <Text style={styles.textWhite}>
+                            Envoyer des données toutes les :
+                    </Text>
+                        <Slider
+                            value={Number(this.state.number)}
+                            style={styles.slider}
+                            onValueChange={(value) => this.setState({ number: value })}
+                            minimumValue={5}
+                            maximumValue={30}
+                            step={1}
+                        />
+                        <Text style={styles.textWhite}>
+                            {this.state.number}
+                        </Text>
+                    </View>
                     <Button
                         style={styles.button}
                         color="#80cc24"

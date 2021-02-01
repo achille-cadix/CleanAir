@@ -290,7 +290,11 @@ class HomePage extends React.Component {
     render() {
         return (
             <ImageBackground style={styles.image} source={require('../assets/pictures/background_image.png')}>
-                <View style={{ flex: 1, flexDirection: 'row', alignItems: 'flex-end' }}>
+                <View style={{ flex: 1, flexDirection: 'column', alignItems: 'center' }}>
+                    <Button
+                        title="Simulateur"
+                        onPress={() => { this.props.navigation.navigate("SimuPage", { hc05ID: this.state.hc05ID, }) }}
+                    />
                     <TouchableOpacity
                         onPress={this.connectToHC05}
                         style={styles.touchableOpacity}
