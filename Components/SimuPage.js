@@ -31,9 +31,10 @@ class SimuPage extends React.Component {
             valuesReceived: 1,
             number: 15,
             age: 30,
-            unansweredCalls: 0
+            unansweredCalls: 0,
+            fixed_graph: true
         }
-        this.defaultValues = { "@setting_number": 15, "@setting_age": 30 };
+        this.defaultValues = { "@setting_number": 15, "@setting_age": 30, "@setting_deviceName": "HC-05", "@setting_fixedGraph": true };
     }
 
     getMyStringValue = async (item) => {
@@ -51,7 +52,7 @@ class SimuPage extends React.Component {
         this.setState({
             unansweredCalls: 0,
             valuesReceived: this.state.valuesReceived + 1,
-            data: [...this.state.data, { x: this.state.valuesReceived, y: parseFloat(fakeData), timestamp: receptionTime }]
+            data: [...this.state?.data, { x: this.state.valuesReceived, y: parseFloat(fakeData), timestamp: receptionTime }]
         });
         try {
             this.sendDataToURL(this.state.data[this.state.data.length - 1]);
@@ -61,37 +62,12 @@ class SimuPage extends React.Component {
             console.log(e);
         }
         this.limitToTime();
-        /*
-        this.write(this.props.navigation.state.params.hc05ID, "8");
-        BluetoothSerial.readFromDevice(this.props.navigation.state.params.hc05ID).then((response) => {
-            if (response && response > 0 && response < 300) {
-                let receptionTime = +new Date;
-                this.setState({
-                    unansweredCalls: 0,
-                    valuesReceived: this.state.valuesReceived + 1,
-                    data: [...this.state.data, { x: this.state.valuesReceived, y: parseFloat(response), timestamp: receptionTime }]
-                });
-                try {
-                    this.sendDataToURL(this.state.data[this.state.data.length - 1]);
-                    this.sendMeanValueToURL();
-                }
-                catch (e) {
-                    console.log(e);
-                }
-
-            }
-            else {
-                console.log('no response')
-                this.setState({ unansweredCalls: this.state.unansweredCalls + 1 });
-            }
-            this.limitToTime();
-        });*/
     };
 
     limitToTime = async () => {
         if (this.state.data.length > 1) {
             let lastData = this.state.data[this.state.data.length - 1];
-            newData = this.state.data.filter(x => { if (lastData.timestamp - x.timestamp < this.state.age * 1000) { return x } })
+            let newData = this.state.data.filter(x => { if (lastData.timestamp - x.timestamp < this.state.age * 1000) { return x } })
             this.setState({ data: newData });
         }
     }
@@ -133,21 +109,24 @@ class SimuPage extends React.Component {
         }
     }
 
-    updateSettings = (number, age) => {
+    updateSettings = (number, age, fixed_graph) => {
         this.setState({
             data: [],
             valuesReceived: 1,
             number: number,
-            age: age
+            age: age,
+            fixed_graph: fixed_graph
         });
         this.forceUpdate();
     }
 
     async componentDidMount() {
-        setting_number = await this.getMyStringValue("@setting_number");
-        setting_age = await this.getMyStringValue("@setting_age");
+        let setting_number = await this.getMyStringValue("@setting_number");
+        let setting_age = await this.getMyStringValue("@setting_age");
+        let fixed_graph = await this.getMyStringValue("@setting_fixedGraph");
         this.setState({ number: setting_number });
-        this.setState({ age: setting_age })
+        this.setState({ age: setting_age });
+        this.setState({ fixed_graph: String(fixed_graph) == 'true' });
         await requestLocationPermission();
         await Geolocation.getCurrentPosition((position) => {
             this.setState({ location: position })
@@ -155,12 +134,6 @@ class SimuPage extends React.Component {
             (error) => console.log(new Date(), error),
             { enableHighAccuracy: false, timeout: 5000 });
         const startTime = new Date();
-        BluetoothSerial.readFromDevice(this.props.navigation.state.params.hc05ID).then((response) => {
-            this.setState({
-                data: [...this.state.data, { x: 0, y: response, timestamp: startTime }],
-                startTime: startTime
-            });
-        })
         this.generateFakeData();
         const intervalId = BackgroundTimer.setInterval(() => {
             this.generateFakeData();
@@ -170,10 +143,11 @@ class SimuPage extends React.Component {
     render() {
         return (
             <ImageBackground style={styles.image} source={require('../assets/pictures/background_image.png')}>
-                <Text style={styles.textWhite}>Proportion de particules PM2.5 : {this.state.data[this.state.data.length - 1]?.y} µg/m³</Text>
+                <Text style={styles.textPM25}>PM2.5 : {this.state.data[this.state.data.length - 1]?.y} µg/m³</Text>
                 <VictoryChart style={styles.chart} theme={VictoryTheme.material}>
                     <VictoryAxis
                         tickLabelComponent={<VictoryLabel dy={0} dx={10} angle={55} />}
+                        tickFormat={(x) => ''} // Values displayed on the X axis
                         style={{
                             axis: {
                                 stroke: 'white'  //CHANGE COLOR OF X-AXIS
@@ -182,8 +156,7 @@ class SimuPage extends React.Component {
                                 fill: 'white' //CHANGE COLOR OF X-AXIS LABELS
                             },
                             grid: {
-                                stroke: 'white', //CHANGE COLOR OF X-AXIS GRID LINES
-                                strokeDasharray: '7',
+                                stroke: 'none' //CHANGE COLOR OF X-AXIS GRID LINES
                             }
                         }}
                     />
@@ -206,9 +179,7 @@ class SimuPage extends React.Component {
                     <VictoryArea
                         data={this.state.data}
                         interpolation="natural"
-                        domain={{ y: [0, 300] }}
-                        labels={({ datum }) => datum.y}
-                        labelComponent={<VictoryLabel dy={-20} style={{ fill: 'white' }} />}
+                        domain={{ y: this.state.fixed_graph ? [0, 300] : null }}
                         style={{ data: { fill: "#80cc24" } }}
 
                     />
@@ -245,6 +216,12 @@ const styles = StyleSheet.create({
         color: '#ffffff',
         fontFamily: 'sharetech',
         fontSize: 20,
+        padding: 10
+    },
+    textPM25: {
+        color: '#ffffff',
+        fontFamily: 'sharetech',
+        fontSize: 40,
         padding: 10
     }
 });

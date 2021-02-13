@@ -4,6 +4,7 @@ import Toast from "react-native-toast";
 import BluetoothSerial, {
     withSubscription
 } from "react-native-bluetooth-serial-next";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 class HomePage extends React.Component {
@@ -16,7 +17,7 @@ class HomePage extends React.Component {
             scanning: false,
             processing: false,
             unpairedDevices: [],
-            hc05ID: null,
+            deviceID: null,
             connected: false
         };
     }
@@ -65,6 +66,15 @@ class HomePage extends React.Component {
             Toast.showShortBottom(e.message);
         }
     };
+
+    getDeviceName = async () => { //Function that fetches the expected name of the Bluetooth defice
+        try {
+            stringValue = await AsyncStorage.getItem("@device_name")
+            return stringValue != null ? stringValue : "HC-05"
+        } catch (e) {
+            console.log(e)
+        }
+    }
 
     discoverUnpairedDevices = async () => {
         this.setState({ scanning: true });
@@ -224,15 +234,15 @@ class HomePage extends React.Component {
         }
     };
 
-    connectToHC05 = async () => {
+    connectToDevice = async () => {
         try {
-            await this.connect(this.state.hc05ID);
+            await this.connect(this.state.deviceID);
             if (this.state.connected) {
-                this.props.navigation.navigate("ChartPage", { hc05ID: this.state.hc05ID, connect: this.connect });
+                this.props.navigation.navigate("ChartPage", { deviceID: this.state.deviceID, connect: this.connect });
             }
             else {
-                Toast.showShortBottom("Unable to connect to HC05 module");
-                this.connectToHC05();
+                Toast.showShortBottom("Unable to connect to Bluetooth device");
+                this.connectToDevice();
             }
         }
         catch (e) {
@@ -240,18 +250,18 @@ class HomePage extends React.Component {
         }
     }
 
-    pairToHC05 = async () => {
-        if (this.state.hc05ID === null || this.state.hc05ID === undefined) {
+    pairToDevice = async () => {
+        if (this.state.deviceID === null || this.state.deviceID === undefined) {
             await this.discoverUnpairedDevices();
-            let hc05ID = this.state.unpairedDevices.find(x => x.name === "HC-05")?.id;
-            if (hc05ID) {
-                await this.pairDevice(hc05ID);
-                this.setState({ hc05ID: hc05ID });
-                this.connectToHC05();
+            let deviceID = this.state.unpairedDevices.find(x => x.name === "HC-05")?.id;
+            if (deviceID) {
+                await this.pairDevice(deviceID);
+                this.setState({ deviceID: deviceID });
+                this.connectToDevice();
             }
             else {
                 Toast.showShortBottom("HC05 not found during scan, re-trying")
-                this.pairToHC05();
+                this.pairToDevice();
             }
         }
     }
@@ -271,16 +281,17 @@ class HomePage extends React.Component {
                     connected: false
                 }))
             });
-            let hc05ID = this.state.devices.find(x => x.name === "HC-05")?.id;
+            let deviceName = await this.getDeviceName();
+            let deviceID = this.state.devices.find(x => x.name === deviceName)?.id;
             this.setState({
-                hc05ID: hc05ID
+                deviceID: deviceID
             });
-            if (hc05ID) {
-                this.connectToHC05();
+            if (deviceID) {
+                this.connectToDevice();
             }
             else {
-                Toast.showShortBottom('HC05 not paired or found, please wait for automatic connection');
-                this.pairToHC05();
+                Toast.showShortBottom(deviceName + ' not paired or found, please wait for automatic connection');
+                this.pairToDevice();
             }
         } catch (e) {
             Toast.showShortBottom(e.message);
@@ -293,10 +304,10 @@ class HomePage extends React.Component {
                 <View style={{ flex: 1, flexDirection: 'column', alignItems: 'center' }}>
                     <Button
                         title="Simulateur"
-                        onPress={() => { this.props.navigation.navigate("SimuPage", { hc05ID: this.state.hc05ID, }) }}
+                        onPress={() => { this.props.navigation.navigate("SimuPage", { hc05ID: this.state.deviceID, }) }}
                     />
                     <TouchableOpacity
-                        onPress={this.connectToHC05}
+                        onPress={this.connectToDevice}
                         style={styles.touchableOpacity}
                     >
                         <View style={styles.touchableInside}>

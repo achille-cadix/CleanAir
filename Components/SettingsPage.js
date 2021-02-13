@@ -1,11 +1,23 @@
 import React from 'react';
 import Slider from '@react-native-community/slider';
-import { StyleSheet, View, Text, Button, ImageBackground } from 'react-native';
+import { StyleSheet, View, Text, Button, ImageBackground, TextInput } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from "react-native-toast";
+import CheckBox from '@react-native-community/checkbox';
 
 
 class SettingsPage extends React.Component {
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            number: 15,
+            age: 30,
+            deviceName: "HC-05",
+            fixed_graph: true
+        };
+        this.defaultValues = { "@setting_number": 15, "@setting_age": 30, "@setting_deviceName": "HC-05", "@setting_fixedGraph": true };
+    }
 
     storeData = async (item, value) => {
         console.log(this.state)
@@ -16,13 +28,7 @@ class SettingsPage extends React.Component {
         }
     }
 
-    constructor(props) {
-        super(props);
-        this.state = {
-            number: 15,
-            age: 30
-        };
-    }
+
 
     getMyStringValue = async (item) => {
         try {
@@ -34,18 +40,21 @@ class SettingsPage extends React.Component {
     }
 
     handleLeave = async () => {
-        this.props.navigation.state.params.updateSettings(this.state.number, this.state.age);
+        this.props.navigation.state.params.updateSettings(this.state.number, this.state.age, this.state.fixed_graph);
         await this.storeData('@setting_number', this.state.number);
         await this.storeData('@setting_age', this.state.age);
-        this.props.navigation.navigate("ChartPage");
+        await this.storeData('@setting_deviceName', this.state.deviceName);
+        await this.storeData('@setting_fixedGraph', this.state.fixed_graph);
+        this.props.navigation.goBack();
     }
 
     componentDidMount = async () => {
         try {
-            setting_number = await this.getMyStringValue("@setting_number");
-            setting_age = await this.getMyStringValue("@setting_age");
-            this.setState({ number: setting_number })
-            this.setState({ age: setting_age })
+            let setting_number = await this.getMyStringValue("@setting_number");
+            let setting_age = await this.getMyStringValue("@setting_age");
+            let setting_deviceName = await this.getMyStringValue("@setting_deviceName");
+            let setting_fixedGraph = await this.getMyStringValue("@setting_fixedGraph");
+            this.setState({ number: setting_number, age: setting_age, deviceName: setting_deviceName, fixed_graph: setting_fixedGraph });
         }
         catch (e) {
             console.log(e)
@@ -55,10 +64,10 @@ class SettingsPage extends React.Component {
     render() {
         return (
             <ImageBackground style={styles.image} source={require('../assets/pictures/background_image.png')}>
-                <View>
+                <View style={styles.mainView}>
                     <Text style={styles.textWhite} >
                         Age maximal des données
-                </Text>
+                    </Text>
                     <Slider
                         value={Number(this.state.age)}
                         style={styles.slider}
@@ -71,10 +80,10 @@ class SettingsPage extends React.Component {
                         {this.state.age}
                     </Text>
 
-                    <View styles={styles.container}>
+                    <View style={styles.container}>
                         <Text style={styles.textWhite}>
                             Envoyer des données toutes les :
-                    </Text>
+                        </Text>
                         <Slider
                             value={Number(this.state.number)}
                             style={styles.slider}
@@ -87,6 +96,27 @@ class SettingsPage extends React.Component {
                             {this.state.number}
                         </Text>
                     </View>
+                    <View style={styles.container}>
+                        <Text style={styles.textWhite}>
+                            Fixed axis on the graph :
+                        </Text>
+                        <CheckBox
+                            style={{ color: "#ffffff" }}
+                            value={String(this.state.fixed_graph) == 'true'}
+                            onValueChange={(value) => this.setState({ fixed_graph: value })}
+                        />
+                    </View>
+                    <Text style={styles.textWhite}>
+                        Device's name :
+                        </Text>
+                    <View style={styles.textInputStyle}>
+                        <TextInput
+                            defaultValue={this.state.deviceName}
+                            onChangeText={(text) => this.setState({ deviceName: text })}
+                        />
+                    </View>
+                </View>
+                <View style={styles.buttonContainer}>
                     <Button
                         style={styles.button}
                         color="#80cc24"
@@ -113,8 +143,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: "#f5fcff"
+        alignItems: "center"
     },
     textWhite: {
         color: '#ffffff',
@@ -123,6 +152,19 @@ const styles = StyleSheet.create({
     },
     button: {
         marginTop: 300
+    },
+    buttonContainer: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center'
+    },
+    textInputStyle: {
+        backgroundColor: "#f5fcff",
+        width: 200
+    },
+    mainView: {
+        flex: 1,
+        alignItems: "center"
     }
 });
 

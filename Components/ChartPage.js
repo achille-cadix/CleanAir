@@ -33,7 +33,7 @@ class ChartPage extends React.Component {
             age: 30,
             unansweredCalls: 0
         }
-        this.defaultValues = { "@setting_number": 15, "@setting_age": 30 };
+        this.defaultValues = { "@setting_number": 15, "@setting_age": 30, "@device_name": "HC-05" };
     }
 
     getMyStringValue = async (item) => {
@@ -47,15 +47,15 @@ class ChartPage extends React.Component {
 
     requestDataFromHC05 = async () => {
         if (this.state.unansweredCalls > 5) {
-            const connected = await BluetoothSerial.device(this.props.navigation.state.params.hc05ID).connect();
+            const connected = await BluetoothSerial.device(this.props.navigation.state.params.deviceID).connect();
             console.log('trying to reconnect')
             if (connected) {
                 this.setState({ unansweredCalls: 0 });
             }
         }
         else {
-            this.write(this.props.navigation.state.params.hc05ID, "8");
-            BluetoothSerial.readFromDevice(this.props.navigation.state.params.hc05ID).then((response) => {
+            this.write(this.props.navigation.state.params.deviceID, "8");
+            BluetoothSerial.readFromDevice(this.props.navigation.state.params.deviceID).then((response) => {
                 if (response && response > 0 && response < 300) {
                     let receptionTime = +new Date;
                     this.setState({
@@ -81,10 +81,39 @@ class ChartPage extends React.Component {
         }
     };
 
+    disconnect = async id => {
+        this.setState({ processing: true });
+
+        try {
+            await BluetoothSerial.device(id).disconnect();
+
+            this.setState(({ devices, device }) => ({
+                processing: false,
+                device: {
+                    ...device,
+                    connected: false
+                },
+                devices: devices.map(v => {
+                    if (v.id === id) {
+                        return {
+                            ...v,
+                            connected: false
+                        };
+                    }
+
+                    return v;
+                })
+            }));
+        } catch (e) {
+            Toast.showShortBottom(e.message);
+            this.setState({ processing: false });
+        }
+    };
+
     limitToTime = async () => {
         if (this.state.data.length > 1) {
             let lastData = this.state.data[this.state.data.length - 1];
-            newData = this.state.data.filter(x => { if (lastData.timestamp - x.timestamp < this.state.age * 1000) { return x } })
+            let newData = this.state.data.filter(x => { if (lastData.timestamp - x.timestamp < this.state.age * 1000) { return x } })
             this.setState({ data: newData });
         }
     }
@@ -145,8 +174,8 @@ class ChartPage extends React.Component {
     }
 
     async componentDidMount() {
-        setting_number = await this.getMyStringValue("@setting_number");
-        setting_age = await this.getMyStringValue("@setting_age");
+        let setting_number = await this.getMyStringValue("@setting_number");
+        let setting_age = await this.getMyStringValue("@setting_age");
         this.setState({ number: setting_number });
         this.setState({ age: setting_age })
         await requestLocationPermission();
@@ -156,8 +185,8 @@ class ChartPage extends React.Component {
             (error) => console.log(new Date(), error),
             { enableHighAccuracy: false, timeout: 5000 });
         const startTime = new Date();
-        this.write(this.props.navigation.state.params.hc05ID, "8");
-        BluetoothSerial.readFromDevice(this.props.navigation.state.params.hc05ID).then((response) => {
+        this.write(this.props.navigation.state.params.deviceID, "8");
+        BluetoothSerial.readFromDevice(this.props.navigation.state.params.deviceID).then((response) => {
             this.setState({
                 data: [...this.state.data, { x: 0, y: response, timestamp: startTime }],
                 startTime: startTime
@@ -209,8 +238,6 @@ class ChartPage extends React.Component {
                         data={this.state.data}
                         interpolation="natural"
                         domain={{ y: [0, 300] }}
-                        labels={({ datum }) => datum.y}
-                        labelComponent={<VictoryLabel dy={-20} style={{ fill: 'white' }} />}
                         style={{ data: { fill: "#80cc24" } }}
 
                     />
