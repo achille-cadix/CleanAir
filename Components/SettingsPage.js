@@ -1,6 +1,6 @@
 import React from 'react';
 import Slider from '@react-native-community/slider';
-import { StyleSheet, View, Text, Button, ImageBackground, TextInput } from 'react-native';
+import { StyleSheet, View, Text, Button, ImageBackground, TextInput, BackHandler } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from "react-native-toast";
 import CheckBox from '@react-native-community/checkbox';
@@ -49,6 +49,11 @@ class SettingsPage extends React.Component {
     }
 
     componentDidMount = async () => {
+        this.backHandler = BackHandler.addEventListener(
+            "hardwareBackPress",
+            this.handleLeave
+        );
+
         try {
             let setting_number = await this.getMyStringValue("@setting_number");
             let setting_age = await this.getMyStringValue("@setting_age");
@@ -127,14 +132,6 @@ class SettingsPage extends React.Component {
                         />
                     </View>
                 </View>
-                <View style={styles.buttonContainer}>
-                    <Button
-                        style={styles.button}
-                        color="#80cc24"
-                        title="Enregistrer les paramètres"
-                        onPress={() => this.handleLeave()}
-                    />
-                </View>
             </ImageBackground>
         )
     }
@@ -175,7 +172,8 @@ const styles = StyleSheet.create({
     },
     mainView: {
         flex: 1,
-        alignItems: "center"
+        alignItems: "center",
+        padding: 50
     }
 });
 
