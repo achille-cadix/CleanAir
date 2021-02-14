@@ -9,7 +9,7 @@ import Geolocation from '@react-native-community/geolocation';
 import axios from 'axios';
 import BackgroundTimer from 'react-native-background-timer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import RNAndroidLocationEnabler from 'react-native-android-location-enabler';
 const url = "https://enjl220ffgif30o.m.pipedream.net";
 
 
@@ -73,39 +73,54 @@ class SimuPage extends React.Component {
     }
 
     sendDataToURL = async (data) => {
-        await Geolocation.getCurrentPosition((position) => {
-            this.setState({ location: position });
-        },
-            (error) => console.log(new Date(), error),
-            { enableHighAccuracy: false, timeout: 5000 });
-        let body = {
-            PM25: data.y,
-            timestamp: data.timestamp,
-            longitude: this.state.location.coords.longitude,
-            latitude: this.state.location.coords.latitude,
-        };
-        console.log(body);
-        axios({ method: 'post', url: url, data: body });
-    }
-
-    sendMeanValueToURL = async () => {
-        if ((this.state.valuesReceived % this.state.number) === 0 && this.state.data.length >= this.state.number) {
+        try {
             await Geolocation.getCurrentPosition((position) => {
                 this.setState({ location: position });
             },
                 (error) => console.log(new Date(), error),
                 { enableHighAccuracy: false, timeout: 5000 });
-            let cleanedData = this.state.data.filter(x => { if (typeof (x.y) == 'number') { return x } });
-            let meanPM25 = cleanedData.reduce((acc, e) => (acc + e.y), 0) / cleanedData.length;
-            let timestamp = this.state.data[this.state.data.length - 1]?.timestamp;
             let body = {
-                PM25Mean: meanPM25,
-                timestamp: timestamp,
+                PM25: data.y,
+                timestamp: data.timestamp,
                 longitude: this.state.location.coords.longitude,
                 latitude: this.state.location.coords.latitude,
             };
             console.log(body);
             axios({ method: 'post', url: url, data: body });
+        }
+        catch (e) {
+            if (e instanceof TypeError) {
+                Toast.showShortBottom("Location not found, please check that your location is activated");
+            }
+            console.log(e);
+        }
+    }
+
+    sendMeanValueToURL = async () => {
+        if ((this.state.valuesReceived % this.state.number) === 0 && this.state.data.length >= this.state.number) {
+            try {
+                await Geolocation.getCurrentPosition((position) => {
+                    this.setState({ location: position });
+                },
+                    (error) => console.log(new Date(), error),
+                    { enableHighAccuracy: false, timeout: 5000 });
+                let cleanedData = this.state.data.filter(x => { if (typeof (x.y) == 'number') { return x } });
+                let meanPM25 = cleanedData.reduce((acc, e) => (acc + e.y), 0) / cleanedData.length;
+                let timestamp = this.state.data[this.state.data.length - 1]?.timestamp;
+                let body = {
+                    PM25Mean: meanPM25,
+                    timestamp: timestamp,
+                    longitude: this.state.location.coords.longitude,
+                    latitude: this.state.location.coords.latitude,
+                };
+                console.log(body);
+                axios({ method: 'post', url: url, data: body });
+            }
+            catch (e) {
+                if (e instanceof TypeError) {
+                    Toast.showShortBottom("Location not found, please check that your location is activated");
+                }
+            }
         }
     }
 
@@ -121,6 +136,10 @@ class SimuPage extends React.Component {
     }
 
     async componentDidMount() {
+        RNAndroidLocationEnabler.promptForEnableLocationIfNeeded({
+            interval: 10000,
+            fastInterval: 5000,
+        })
         let setting_number = await this.getMyStringValue("@setting_number");
         let setting_age = await this.getMyStringValue("@setting_age");
         let fixed_graph = await this.getMyStringValue("@setting_fixedGraph");

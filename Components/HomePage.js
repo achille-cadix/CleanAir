@@ -236,17 +236,22 @@ class HomePage extends React.Component {
 
     connectToDevice = async () => {
         try {
-            await this.connect(this.state.deviceID);
-            if (this.state.connected) {
-                this.props.navigation.navigate("ChartPage", { deviceID: this.state.deviceID, connect: this.connect });
+            if (this.state.deviceID) {
+                await this.connect(this.state.deviceID);
+                if (this.state.connected) {
+                    this.props.navigation.navigate("ChartPage", { deviceID: this.state.deviceID, connect: this.connect });
+                }
+                else {
+                    Toast.showShortBottom("Unable to connect to Bluetooth device");
+                    this.connectToDevice();
+                }
             }
             else {
-                Toast.showShortBottom("Unable to connect to Bluetooth device");
-                this.connectToDevice();
+                Toast.showShortBottom("HC05 not found or paired, check if it and the Bluetooth is turned on, or wait for pairing");
             }
         }
         catch (e) {
-            Toast.showShortBottom("HC05 not found or paired, check if it is turned on, or wait for pairing");
+            Toast.showShortBottom("HC05 not found or paired, check if it and the Bluetooth is turned on, or wait for pairing");
         }
     }
 
