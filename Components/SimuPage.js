@@ -34,7 +34,7 @@ class SimuPage extends React.Component {
             unansweredCalls: 0,
             fixed_graph: true
         }
-        this.defaultValues = { "@setting_number": 15, "@setting_age": 30, "@setting_deviceName": "HC-05", "@setting_fixedGraph": true };
+        this.defaultValues = { "@setting_number": 15, "@setting_age": 30, "@setting_deviceName": "HC-05", "@setting_fixedGraph": true, "@setting_sendData": true };
     }
 
     getMyStringValue = async (item) => {
@@ -54,12 +54,14 @@ class SimuPage extends React.Component {
             valuesReceived: this.state.valuesReceived + 1,
             data: [...this.state?.data, { x: this.state.valuesReceived, y: parseFloat(fakeData), timestamp: receptionTime }]
         });
-        try {
-            this.sendDataToURL(this.state.data[this.state.data.length - 1]);
-            this.sendMeanValueToURL();
-        }
-        catch (e) {
-            console.log(e);
+        if (this.state.sendData) {
+            try {
+                this.sendDataToURL(this.state.data[this.state.data.length - 1]);
+                this.sendMeanValueToURL();
+            }
+            catch (e) {
+                console.log(e);
+            }
         }
         this.limitToTime();
     };
@@ -124,13 +126,14 @@ class SimuPage extends React.Component {
         }
     }
 
-    updateSettings = (number, age, fixed_graph) => {
+    updateSettings = (number, age, fixed_graph, sendData) => {
         this.setState({
             data: [],
             valuesReceived: 1,
             number: number,
             age: age,
-            fixed_graph: fixed_graph
+            fixed_graph: fixed_graph,
+            sendData: sendData
         });
         this.forceUpdate();
     }
@@ -143,9 +146,11 @@ class SimuPage extends React.Component {
         let setting_number = await this.getMyStringValue("@setting_number");
         let setting_age = await this.getMyStringValue("@setting_age");
         let fixed_graph = await this.getMyStringValue("@setting_fixedGraph");
+        let sendData = await this.getMyStringValue("@setting_sendData");
         this.setState({ number: setting_number });
         this.setState({ age: setting_age });
         this.setState({ fixed_graph: String(fixed_graph) == 'true' });
+        this.setState({ sendData: String(sendData) == 'true' });
         await requestLocationPermission();
         await Geolocation.getCurrentPosition((position) => {
             this.setState({ location: position })

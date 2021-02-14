@@ -16,11 +16,10 @@ class SettingsPage extends React.Component {
             deviceName: "HC-05",
             fixed_graph: true
         };
-        this.defaultValues = { "@setting_number": 15, "@setting_age": 30, "@setting_deviceName": "HC-05", "@setting_fixedGraph": true };
+        this.defaultValues = { "@setting_number": 15, "@setting_age": 30, "@setting_deviceName": "HC-05", "@setting_fixedGraph": true, "@setting_sendData": true };
     }
 
     storeData = async (item, value) => {
-        console.log(this.state)
         try {
             await AsyncStorage.setItem(item, value.toString());
         } catch (e) {
@@ -40,11 +39,12 @@ class SettingsPage extends React.Component {
     }
 
     handleLeave = async () => {
-        this.props.navigation.state.params.updateSettings(this.state.number, this.state.age, this.state.fixed_graph);
+        this.props.navigation.state.params.updateSettings(this.state.number, this.state.age, this.state.fixed_graph, this.state.sendData);
         await this.storeData('@setting_number', this.state.number);
         await this.storeData('@setting_age', this.state.age);
         await this.storeData('@setting_deviceName', this.state.deviceName);
         await this.storeData('@setting_fixedGraph', this.state.fixed_graph);
+        await this.storeData('@setting_sendData', this.state.sendData);
         this.props.navigation.goBack();
     }
 
@@ -54,7 +54,8 @@ class SettingsPage extends React.Component {
             let setting_age = await this.getMyStringValue("@setting_age");
             let setting_deviceName = await this.getMyStringValue("@setting_deviceName");
             let setting_fixedGraph = await this.getMyStringValue("@setting_fixedGraph");
-            this.setState({ number: setting_number, age: setting_age, deviceName: setting_deviceName, fixed_graph: setting_fixedGraph });
+            let setting_sendData = await this.getMyStringValue("@setting_sendData");
+            this.setState({ number: setting_number, age: setting_age, deviceName: setting_deviceName, fixed_graph: setting_fixedGraph, sendData: setting_sendData });
         }
         catch (e) {
             console.log(e)
@@ -104,6 +105,16 @@ class SettingsPage extends React.Component {
                             style={{ color: "#ffffff" }}
                             value={String(this.state.fixed_graph) == 'true'}
                             onValueChange={(value) => this.setState({ fixed_graph: value })}
+                        />
+                    </View>
+                    <View style={styles.container}>
+                        <Text style={styles.textWhite}>
+                            Send data to the Cloud :
+                        </Text>
+                        <CheckBox
+                            style={{ color: "#ffffff" }}
+                            value={String(this.state.sendData) == 'true'}
+                            onValueChange={(value) => this.setState({ sendData: value })}
                         />
                     </View>
                     <Text style={styles.textWhite}>
