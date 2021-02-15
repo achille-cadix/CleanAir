@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Text, Button, PermissionsAndroid, ImageBackground } from 'react-native';
+import { StyleSheet, View, Text, Button, PermissionsAndroid, ImageBackground, BackHandler } from 'react-native';
 import { VictoryAxis, VictoryChart, VictoryTheme, VictoryLabel, VictoryArea } from "victory-native";
 import Toast from "react-native-toast";
 import BluetoothSerial, {
@@ -9,6 +9,7 @@ import Geolocation from '@react-native-community/geolocation';
 import axios from 'axios';
 import BackgroundTimer from 'react-native-background-timer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import RNAndroidLocationEnabler from 'react-native-android-location-enabler';
 
 const url = "https://enjl220ffgif30o.m.pipedream.net";
 
@@ -31,9 +32,10 @@ class ChartPage extends React.Component {
             valuesReceived: 1,
             number: 15,
             age: 30,
-            unansweredCalls: 0
+            unansweredCalls: 0,
+            fixed_graph: true
         }
-        this.defaultValues = { "@setting_number": 15, "@setting_age": 30, "@device_name": "HC-05" };
+        this.defaultValues = { "@setting_number": 15, "@setting_age": 30, "@setting_deviceName": "HC-05", "@setting_fixedGraph": true, "@setting_sendData": true };
     }
 
     getMyStringValue = async (item) => {
@@ -63,12 +65,14 @@ class ChartPage extends React.Component {
                         valuesReceived: this.state.valuesReceived + 1,
                         data: [...this.state.data, { x: this.state.valuesReceived, y: parseFloat(response), timestamp: receptionTime }]
                     });
-                    try {
-                        this.sendDataToURL(this.state.data[this.state.data.length - 1]);
-                        this.sendMeanValueToURL();
-                    }
-                    catch (e) {
-                        console.log(e);
+                    if (this.state.sendData) {
+                        try {
+                            this.sendDataToURL(this.state.data[this.state.data.length - 1]);
+                            this.sendMeanValueToURL();
+                        }
+                        catch (e) {
+                            console.log(e);
+                        }
                     }
 
                 }
@@ -93,7 +97,7 @@ class ChartPage extends React.Component {
                     ...device,
                     connected: false
                 },
-                devices: devices.map(v => {
+                devices: devices?.map(v => {
                     if (v.id === id) {
                         return {
                             ...v,
@@ -119,39 +123,54 @@ class ChartPage extends React.Component {
     }
 
     sendDataToURL = async (data) => {
-        await Geolocation.getCurrentPosition((position) => {
-            this.setState({ location: position });
-        },
-            (error) => console.log(new Date(), error),
-            { enableHighAccuracy: false, timeout: 5000 });
-        let body = {
-            PM25: data.y,
-            timestamp: data.timestamp,
-            longitude: this.state.location.coords.longitude,
-            latitude: this.state.location.coords.latitude,
-        };
-        console.log(body);
-        axios({ method: 'post', url: url, data: body });
-    }
-
-    sendMeanValueToURL = async () => {
-        if ((this.state.valuesReceived % this.state.number) === 0 && this.state.data.length >= this.state.number) {
+        try {
             await Geolocation.getCurrentPosition((position) => {
                 this.setState({ location: position });
             },
                 (error) => console.log(new Date(), error),
                 { enableHighAccuracy: false, timeout: 5000 });
-            let cleanedData = this.state.data.filter(x => { if (typeof (x.y) == 'number') { return x } });
-            let meanPM25 = cleanedData.reduce((acc, e) => (acc + e.y), 0) / cleanedData.length;
-            let timestamp = this.state.data[this.state.data.length - 1]?.timestamp;
             let body = {
-                PM25Mean: meanPM25,
-                timestamp: timestamp,
+                PM25: data.y,
+                timestamp: data.timestamp,
                 longitude: this.state.location.coords.longitude,
                 latitude: this.state.location.coords.latitude,
             };
             console.log(body);
             axios({ method: 'post', url: url, data: body });
+        }
+        catch (e) {
+            if (e instanceof TypeError) {
+                Toast.showShortBottom("Location not found, please check that your location is activated");
+            }
+            console.log(e);
+        }
+    }
+
+    sendMeanValueToURL = async () => {
+        if ((this.state.valuesReceived % this.state.number) === 0 && this.state.data.length >= this.state.number) {
+            try {
+                await Geolocation.getCurrentPosition((position) => {
+                    this.setState({ location: position });
+                },
+                    (error) => console.log(new Date(), error),
+                    { enableHighAccuracy: false, timeout: 5000 });
+                let cleanedData = this.state.data.filter(x => { if (typeof (x.y) == 'number') { return x } });
+                let meanPM25 = cleanedData.reduce((acc, e) => (acc + e.y), 0) / cleanedData.length;
+                let timestamp = this.state.data[this.state.data.length - 1]?.timestamp;
+                let body = {
+                    PM25Mean: meanPM25,
+                    timestamp: timestamp,
+                    longitude: this.state.location.coords.longitude,
+                    latitude: this.state.location.coords.latitude,
+                };
+                console.log(body);
+                axios({ method: 'post', url: url, data: body });
+            }
+            catch (e) {
+                if (e instanceof TypeError) {
+                    Toast.showShortBottom("Location not found, please check that your location is activated");
+                }
+            }
         }
     }
 
@@ -163,21 +182,41 @@ class ChartPage extends React.Component {
         }
     };
 
-    updateSettings = (number, age) => {
+    updateSettings = (number, age, fixed_graph, sendData) => {
         this.setState({
             data: [],
             valuesReceived: 1,
             number: number,
-            age: age
+            age: age,
+            fixed_graph: fixed_graph,
+            sendData: sendData
         });
         this.forceUpdate();
     }
 
+    handleLeave = async () => {
+        await this.disconnect(this.props.navigation.state.params.deviceID);
+        console.log("back pressed");
+        this.props.navigation.goBack();
+    }
+
     async componentDidMount() {
+        this.backHandler = BackHandler.addEventListener(
+            "hardwareBackPress",
+            this.handleLeave
+        );
+        RNAndroidLocationEnabler.promptForEnableLocationIfNeeded({
+            interval: 10000,
+            fastInterval: 5000,
+        })
         let setting_number = await this.getMyStringValue("@setting_number");
         let setting_age = await this.getMyStringValue("@setting_age");
+        let fixed_graph = await this.getMyStringValue("@setting_fixedGraph");
+        let sendData = await this.getMyStringValue("@setting_sendData");
         this.setState({ number: setting_number });
-        this.setState({ age: setting_age })
+        this.setState({ age: setting_age });
+        this.setState({ fixed_graph: String(fixed_graph) == 'true' });
+        this.setState({ sendData: String(sendData) == 'true' });
         await requestLocationPermission();
         await Geolocation.getCurrentPosition((position) => {
             this.setState({ location: position })
@@ -201,10 +240,11 @@ class ChartPage extends React.Component {
     render() {
         return (
             <ImageBackground style={styles.image} source={require('../assets/pictures/background_image.png')}>
-                <Text style={styles.textWhite}>Proportion de particules PM2.5 : {this.state.data[this.state.data.length - 1]?.y} µg/m³</Text>
+                <Text style={styles.textPM25}>PM2.5 : {this.state.data[this.state.data.length - 1]?.y} µg/m³</Text>
                 <VictoryChart style={styles.chart} theme={VictoryTheme.material}>
                     <VictoryAxis
                         tickLabelComponent={<VictoryLabel dy={0} dx={10} angle={55} />}
+                        tickFormat={(x) => ''} // Values displayed on the X axis
                         style={{
                             axis: {
                                 stroke: 'white'  //CHANGE COLOR OF X-AXIS
@@ -213,8 +253,7 @@ class ChartPage extends React.Component {
                                 fill: 'white' //CHANGE COLOR OF X-AXIS LABELS
                             },
                             grid: {
-                                stroke: 'white', //CHANGE COLOR OF X-AXIS GRID LINES
-                                strokeDasharray: '7',
+                                stroke: 'none' //CHANGE COLOR OF X-AXIS GRID LINES
                             }
                         }}
                     />
@@ -237,7 +276,7 @@ class ChartPage extends React.Component {
                     <VictoryArea
                         data={this.state.data}
                         interpolation="natural"
-                        domain={{ y: [0, 300] }}
+                        domain={{ y: this.state.fixed_graph ? [0, 300] : null }}
                         style={{ data: { fill: "#80cc24" } }}
 
                     />
@@ -274,6 +313,12 @@ const styles = StyleSheet.create({
         color: '#ffffff',
         fontFamily: 'sharetech',
         fontSize: 20,
+        padding: 10
+    },
+    textPM25: {
+        color: '#ffffff',
+        fontFamily: 'sharetech',
+        fontSize: 40,
         padding: 10
     }
 });

@@ -48,7 +48,7 @@ class HomePage extends React.Component {
             const list = await BluetoothSerial.list();
 
             this.setState(({ devices }) => ({
-                devices: devices.map(device => {
+                devices: devices?.map(device => {
                     const found = list.find(v => v.id === device.id);
 
                     if (found) {
@@ -84,7 +84,7 @@ class HomePage extends React.Component {
 
             this.setState(({ devices }) => ({
                 scanning: false,
-                unpairedDevices: unpairedDevices.map(device => ({
+                unpairedDevices: unpaireddevices?.map(device => ({
                     ...device,
                     paired: false,
                     connected: false
@@ -134,7 +134,7 @@ class HomePage extends React.Component {
                         ...paired,
                         paired: true
                     },
-                    devices: devices.map(v => {
+                    devices: devices?.map(v => {
                         if (v.id === paired.id) {
                             return {
                                 ...v,
@@ -183,7 +183,7 @@ class HomePage extends React.Component {
                         connected: true
                     },
                     connected: true,
-                    devices: devices.map(v => {
+                    devices: devices?.map(v => {
                         if (v.id === connected.id) {
                             return {
                                 ...v,
@@ -217,7 +217,7 @@ class HomePage extends React.Component {
                     ...device,
                     connected: false
                 },
-                devices: devices.map(v => {
+                devices: devices?.map(v => {
                     if (v.id === id) {
                         return {
                             ...v,
@@ -280,7 +280,7 @@ class HomePage extends React.Component {
 
             this.setState({
                 isEnabled,
-                devices: devices.map(device => ({
+                devices: devices?.map(device => ({
                     ...device,
                     paired: true,
                     connected: false
