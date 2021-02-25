@@ -6254,6 +6254,13 @@ react-native-screens@^2.16.1:
   resolved "https://registry.yarnpkg.com/react-native-screens/-/react-native-screens-2.16.1.tgz#b105a127378d90018a46daf0c2f6518fca60c06f"
   integrity sha512-WZ7m0sBDVaHbBnlHxwQnUlI6KNfQKHq+Unfw+VBuAlnSXvT+aw6Bb/K2bUlHzBgvrPjwY3Spc7ZERFuTwRLLwg==
 
+react-native-spinkit@^1.5.1:
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/react-native-spinkit/-/react-native-spinkit-1.5.1.tgz#5b770ce93e1f892b3d1983fd3ce2d7375335eb6b"
+  integrity sha512-XkTgP4e+/MZpbI1GdZTIEQ+6WeMWQT4duWnSiXaaVW7py0rtaBLswtAEA6uXQGUhnxMnPWZhbLz7QponpH3ciQ==
+  dependencies:
+    prop-types "^15.5.8"
+
 react-native-splash-screen@^3.2.0:
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/react-native-splash-screen/-/react-native-splash-screen-3.2.0.tgz#d47ec8557b1ba988ee3ea98d01463081b60fff45"

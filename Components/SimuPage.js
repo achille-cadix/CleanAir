@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, View, Text, Button, PermissionsAndroid, ImageBackground, BackHandler } from 'react-native';
-import { VictoryAxis, VictoryChart, VictoryTheme, VictoryLabel, VictoryLine, VictoryVoronoiContainer, createContainer, VictoryZoomContainer, VictoryTooltip, VictoryGroup } from "victory-native";
+import { VictoryAxis, VictoryChart, VictoryTheme, VictoryLabel, VictoryLine, VictoryVoronoiContainer, createContainer, VictoryPortal, VictoryTooltip, VictoryGroup, VictoryContainer } from "victory-native";
 import Toast from "react-native-toast";
 import BluetoothSerial, {
     withSubscription
@@ -11,6 +11,7 @@ import BackgroundTimer from 'react-native-background-timer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import RNAndroidLocationEnabler from 'react-native-android-location-enabler';
 const url = "https://enjl220ffgif30o.m.pipedream.net";
+import Spinner from "react-native-spinkit";
 
 
 const requestLocationPermission = async () => {
@@ -19,8 +20,6 @@ const requestLocationPermission = async () => {
         console.log("Position permission denied");
     }
 };
-
-const VictoryZoomVoronoiContainer = createContainer("zoom", "voronoi");
 
 class SimuPage extends React.Component {
 
@@ -34,7 +33,8 @@ class SimuPage extends React.Component {
             number: 15,
             age: 30,
             unansweredCalls: 0,
-            fixed_graph: true
+            fixed_graph: true,
+            settings_loaded: false
         }
         this.defaultValues = { "@setting_number": 15, "@setting_age": 30, "@setting_deviceName": "HC-05", "@setting_fixedGraph": true, "@setting_sendData": true };
     }
@@ -172,6 +172,7 @@ class SimuPage extends React.Component {
         this.setState({ age: setting_age });
         this.setState({ fixed_graph: String(fixed_graph) == 'true' });
         this.setState({ sendData: String(sendData) == 'true' });
+        this.setState({ settings_loaded: true });
         await requestLocationPermission();
         await Geolocation.getCurrentPosition((position) => {
             this.setState({ location: position })
@@ -186,14 +187,22 @@ class SimuPage extends React.Component {
     }
 
     render() {
-        return (
-            <ImageBackground style={styles.image} source={require('../assets/pictures/background_image.png')}>
-                <Text style={styles.textPM}>PM2.5 : {this.state.data[this.state.data.length - 1]?.PM25} µg/m³</Text>
-                <Text style={styles.textPM}>PM1 : {this.state.data[this.state.data.length - 1]?.PM1} µg/m³</Text>
-                <VictoryChart
-                    style={styles.chart}
-                    theme={VictoryTheme.material}
-                    containerComponent={<VictoryVoronoiContainer voronoiDimension="x" />}
+        if (!this.state.settings_loaded) {
+            return (
+                <ImageBackground style={styles.image} source={require('../assets/pictures/background_image.png')}>
+                    <Spinner type="ChasingDots" color="#80cc24" size={90} />
+                </ImageBackground>
+            )
+        }
+        else {
+            return (
+                <ImageBackground style={styles.image} source={require('../assets/pictures/background_image.png')}>
+                    <Text style={styles.textPM}>PM2.5 : {this.state.data[this.state.data.length - 1]?.PM25} µg/m³</Text>
+                    <Text style={styles.textPM}>PM1 : {this.state.data[this.state.data.length - 1]?.PM1} µg/m³</Text>
+                    <VictoryChart
+                        style={styles.chart}
+                        theme={VictoryTheme.material}
+                        containerComponent={<VictoryVoronoiContainer voronoiDimension="x" />}
                     /*containerComponent={
                         <VictoryVoronoiContainer
                             labels={({ datum }) => `PM 1 : ${datum.PM1}, PM 2.5 : ${datum.PM25}`}
@@ -205,86 +214,89 @@ class SimuPage extends React.Component {
                         />
 
                     }*/>
-
-
-                    <VictoryAxis
-                        tickLabelComponent={<VictoryLabel dy={0} dx={10} angle={55} />}
-                        tickFormat={(x) => ''} // Values displayed on the X axis
-                        style={{
-                            axis: {
-                                stroke: 'white'  //CHANGE COLOR OF X-AXIS
-                            },
-                            tickLabels: {
-                                fill: 'white' //CHANGE COLOR OF X-AXIS LABELS
-                            },
-                            grid: {
-                                stroke: 'none' //CHANGE COLOR OF X-AXIS GRID LINES
-                            }
-                        }}
-                    />
-                    <VictoryAxis
-                        dependentAxis
-                        tickFormat={(y) => y}
-                        style={{
-                            axis: {
-                                stroke: 'white'  //CHANGE COLOR OF Y-AXIS
-                            },
-                            tickLabels: {
-                                fill: 'white' //CHANGE COLOR OF Y-AXIS LABELS
-                            },
-                            grid: {
-                                stroke: 'white', //CHANGE COLOR OF Y-AXIS GRID LINES
-                                strokeDasharray: '7',
-                            }
-                        }}
-                    />
-                    <VictoryGroup
-                        labels={({ datum }) => `PM 2.5 : ${datum.PM25}`}
-                        labelComponent={
-                            <VictoryTooltip
-                                style={{ fontSize: '15px' }}
-                                renderInPortal={false}
-                                size={40}
-                                constrainToVisibleArea
-                            />}
-                        offset={1000}
-                    >
-                        <VictoryLine
-                            data={this.state.data}
-                            interpolation="natural"
-                            y="PM25"
-                            domain={{ y: this.state.fixed_graph ? [0, 300] : null }}
-                            style={{ data: { stroke: "#80cc24" } }}
+                        <VictoryAxis
+                            tickLabelComponent={<VictoryLabel dy={0} dx={10} angle={55} />}
+                            tickFormat={(x) => ''} // Values displayed on the X axis
+                            style={{
+                                axis: {
+                                    stroke: 'white'  //CHANGE COLOR OF X-AXIS
+                                },
+                                tickLabels: {
+                                    fill: 'white' //CHANGE COLOR OF X-AXIS LABELS
+                                },
+                                grid: {
+                                    stroke: 'none' //CHANGE COLOR OF X-AXIS GRID LINES
+                                }
+                            }}
                         />
-                    </VictoryGroup>
-                    <VictoryGroup
-                        labels={({ datum }) => `PM 1 : ${datum.PM1}`}
-                        labelComponent={
-                            <VictoryTooltip
-                                style={{ fontSize: '15px' }}
-                                renderInPortal={false}
-                                constrainToVisibleArea
-                            />}
-                        offset={1000}
-                    >
-                        <VictoryLine
-                            data={this.state.data}
-                            interpolation="natural"
-                            y="PM1"
-                            domain={{ y: this.state.fixed_graph ? [0, 300] : null }}
-                            style={{ data: { stroke: "#eb9b34" } }}
+                        <VictoryAxis
+                            dependentAxis
+                            tickFormat={(y) => y}
+                            style={{
+                                axis: {
+                                    stroke: 'white'  //CHANGE COLOR OF Y-AXIS
+                                },
+                                tickLabels: {
+                                    fill: 'white' //CHANGE COLOR OF Y-AXIS LABELS
+                                },
+                                grid: {
+                                    stroke: 'white', //CHANGE COLOR OF Y-AXIS GRID LINES
+                                    strokeDasharray: '7',
+                                }
+                            }}
                         />
-                    </VictoryGroup>
-                </VictoryChart>
-                <Button
-                    title="Changer les paramètres"
-                    color="#80cc24"
-                    onPress={() => this.props.navigation.navigate("SettingsPage", { defaultValues: this.defaultValues, updateSettings: this.updateSettings })}
-                />
-                <Text style={styles.textWhite}>Age maximal des données : {this.state.age}</Text>
-                <Text style={styles.textWhite}>Envoi des données toutes les : {this.state.number}</Text>
-            </ImageBackground>
-        )
+                        <VictoryGroup
+                            labels={({ datum }) => `PM 2.5 : ${datum.PM25}`}
+                            labelComponent={
+                                <VictoryTooltip
+                                    flyoutPadding={7}
+                                    style={{ fontSize: '15px', padding: 5 }}
+                                    renderInPortal={false}
+                                    constrainToVisibleArea
+                                />
+                            }
+                            offset={1000}
+                        >
+
+                            <VictoryLine
+                                data={this.state.data}
+                                interpolation="natural"
+                                y="PM25"
+                                domain={{ y: this.state.fixed_graph ? [0, 300] : null }}
+                                style={{ data: { stroke: "#80cc24" } }}
+                            />
+                        </VictoryGroup>
+                        <VictoryGroup
+                            labels={({ datum }) => `PM 1 : ${datum.PM1}`}
+                            labelComponent={
+                                <VictoryTooltip
+                                    flyoutPadding={7}
+                                    style={{ fontSize: '15px' }}
+                                    renderInPortal={false}
+                                    constrainToVisibleArea
+                                />
+                            }
+                            offset={1000}
+                        >
+                            <VictoryLine
+                                data={this.state.data}
+                                interpolation="natural"
+                                y="PM1"
+                                domain={{ y: this.state.fixed_graph ? [0, 300] : null }}
+                                style={{ data: { stroke: "#eb9b34" } }}
+                            />
+                        </VictoryGroup>
+                    </VictoryChart >
+                    <Button
+                        title="Changer les paramètres"
+                        color="#80cc24"
+                        onPress={() => this.props.navigation.navigate("SettingsPage", { defaultValues: this.defaultValues, updateSettings: this.updateSettings })}
+                    />
+                    <Text style={styles.textWhite}>Age maximal des données : {this.state.age}</Text>
+                    <Text style={styles.textWhite}>Envoi des données toutes les : {this.state.number}</Text>
+                </ImageBackground >
+            )
+        }
     }
 }
 

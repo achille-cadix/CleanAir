@@ -4,7 +4,7 @@ import { StyleSheet, View, Text, Button, ImageBackground, TextInput, BackHandler
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from "react-native-toast";
 import CheckBox from '@react-native-community/checkbox';
-
+import Spinner from "react-native-spinkit";
 
 class SettingsPage extends React.Component {
 
@@ -14,7 +14,8 @@ class SettingsPage extends React.Component {
             number: 15,
             age: 30,
             deviceName: "HC-05",
-            fixed_graph: true
+            fixed_graph: true,
+            settings_loaded: false
         };
         this.defaultValues = { "@setting_number": 15, "@setting_age": 30, "@setting_deviceName": "HC-05", "@setting_fixedGraph": true, "@setting_sendData": true };
     }
@@ -60,7 +61,7 @@ class SettingsPage extends React.Component {
             let setting_deviceName = await this.getMyStringValue("@setting_deviceName");
             let setting_fixedGraph = await this.getMyStringValue("@setting_fixedGraph");
             let setting_sendData = await this.getMyStringValue("@setting_sendData");
-            this.setState({ number: setting_number, age: setting_age, deviceName: setting_deviceName, fixed_graph: setting_fixedGraph, sendData: setting_sendData });
+            this.setState({ number: setting_number, age: setting_age, deviceName: setting_deviceName, fixed_graph: setting_fixedGraph, sendData: setting_sendData, settings_loaded: true });
         }
         catch (e) {
             console.log(e)
@@ -68,72 +69,81 @@ class SettingsPage extends React.Component {
     }
 
     render() {
-        return (
-            <ImageBackground style={styles.image} source={require('../assets/pictures/background_image.png')}>
-                <View style={styles.mainView}>
-                    <Text style={styles.textWhite} >
-                        Age maximal des données
+        if (!this.state.settings_loaded) {
+            return (
+                <ImageBackground style={styles.image} source={require('../assets/pictures/background_image.png')}>
+                    <Spinner type="ChasingDots" color="#80cc24" size={90} />
+                </ImageBackground>
+            )
+        }
+        else {
+            return (
+                <ImageBackground style={styles.image} source={require('../assets/pictures/background_image.png')}>
+                    <View style={styles.mainView}>
+                        <Text style={styles.textWhite} >
+                            Age maximal des données
                     </Text>
-                    <Slider
-                        value={Number(this.state.age)}
-                        style={styles.slider}
-                        onValueChange={(value) => this.setState({ age: value })}
-                        minimumValue={5}
-                        maximumValue={60}
-                        step={1}
-                    />
-                    <Text style={styles.textWhite}>
-                        {this.state.age}
-                    </Text>
-
-                    <View style={styles.container}>
-                        <Text style={styles.textWhite}>
-                            Envoyer des données toutes les :
-                        </Text>
                         <Slider
-                            value={Number(this.state.number)}
+                            value={Number(this.state.age)}
                             style={styles.slider}
-                            onValueChange={(value) => this.setState({ number: value })}
+                            onValueChange={(value) => this.setState({ age: value })}
                             minimumValue={5}
-                            maximumValue={30}
+                            maximumValue={60}
                             step={1}
                         />
                         <Text style={styles.textWhite}>
-                            {this.state.number}
+                            {this.state.age}
                         </Text>
-                    </View>
-                    <View style={styles.container}>
+
+                        <View style={styles.container}>
+                            <Text style={styles.textWhite}>
+                                Envoyer des données toutes les :
+                        </Text>
+                            <Slider
+                                value={Number(this.state.number)}
+                                style={styles.slider}
+                                onValueChange={(value) => this.setState({ number: value })}
+                                minimumValue={5}
+                                maximumValue={30}
+                                step={1}
+                            />
+                            <Text style={styles.textWhite}>
+                                {this.state.number}
+                            </Text>
+                        </View>
+                        <View style={styles.container}>
+                            <Text style={styles.textWhite}>
+                                Fixed axis on the graph :
+                        </Text>
+                            <CheckBox
+                                style={{ color: "#ffffff" }}
+                                value={String(this.state.fixed_graph) == 'true'}
+                                onValueChange={(value) => this.setState({ fixed_graph: value })}
+                            />
+                        </View>
+                        <View style={styles.container}>
+                            <Text style={styles.textWhite}>
+                                Send data to the Cloud :
+                        </Text>
+                            <CheckBox
+                                style={{ color: "#ffffff" }}
+                                value={String(this.state.sendData) == 'true'}
+                                onValueChange={(value) => this.setState({ sendData: value })}
+                            />
+                        </View>
                         <Text style={styles.textWhite}>
-                            Fixed axis on the graph :
+                            Device's name :
                         </Text>
-                        <CheckBox
-                            style={{ color: "#ffffff" }}
-                            value={String(this.state.fixed_graph) == 'true'}
-                            onValueChange={(value) => this.setState({ fixed_graph: value })}
-                        />
+                        <View style={styles.textInputStyle}>
+                            <TextInput
+                                defaultValue={this.state.deviceName}
+                                onChangeText={(text) => this.setState({ deviceName: text })}
+                            />
+                        </View>
                     </View>
-                    <View style={styles.container}>
-                        <Text style={styles.textWhite}>
-                            Send data to the Cloud :
-                        </Text>
-                        <CheckBox
-                            style={{ color: "#ffffff" }}
-                            value={String(this.state.sendData) == 'true'}
-                            onValueChange={(value) => this.setState({ sendData: value })}
-                        />
-                    </View>
-                    <Text style={styles.textWhite}>
-                        Device's name :
-                        </Text>
-                    <View style={styles.textInputStyle}>
-                        <TextInput
-                            defaultValue={this.state.deviceName}
-                            onChangeText={(text) => this.setState({ deviceName: text })}
-                        />
-                    </View>
-                </View>
-            </ImageBackground>
-        )
+                </ImageBackground>
+            )
+        }
     }
 }
 
