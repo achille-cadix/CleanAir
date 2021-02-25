@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, View, Text, Button, PermissionsAndroid, ImageBackground, BackHandler } from 'react-native';
-import { VictoryAxis, VictoryChart, VictoryTheme, VictoryLabel, VictoryArea } from "victory-native";
+import { VictoryAxis, VictoryChart, VictoryTheme, VictoryLabel, VictoryLine } from "victory-native";
 import Toast from "react-native-toast";
 import BluetoothSerial, {
     withSubscription
@@ -273,7 +273,7 @@ class ChartPage extends React.Component {
                             }
                         }}
                     />
-                    <VictoryArea
+                    <VictoryLine
                         data={this.state.data}
                         interpolation="natural"
                         domain={{ y: this.state.fixed_graph ? [0, 300] : null }}
