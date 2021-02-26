@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, View, Text, Button, PermissionsAndroid, ImageBackground, BackHandler } from 'react-native';
-import { VictoryAxis, VictoryChart, VictoryTheme, VictoryLabel, VictoryLine, VictoryVoronoiContainer, createContainer, VictoryPortal, VictoryTooltip, VictoryGroup, VictoryContainer } from "victory-native";
+import { VictoryAxis, VictoryChart, VictoryTheme, VictoryLabel, VictoryLine, VictoryZoomContainer, VictoryPortal, VictoryTooltip, VictoryGroup, VictoryContainer } from "victory-native";
 import Toast from "react-native-toast";
 import BluetoothSerial, {
     withSubscription
@@ -34,9 +34,19 @@ class SimuPage extends React.Component {
             age: 30,
             unansweredCalls: 0,
             fixed_graph: true,
-            settings_loaded: false
+            settings_loaded: false,
+            zoomDomain: {
+                x: [0, 20], y: [0, 300]
+            },
+            autoPan: true
         }
-        this.defaultValues = { "@setting_number": 15, "@setting_age": 30, "@setting_deviceName": "HC-05", "@setting_fixedGraph": true, "@setting_sendData": true };
+        this.defaultValues = {
+            "@setting_number": 15,
+            "@setting_age": 30,
+            "@setting_deviceName": "HC-05",
+            "@setting_fixedGraph": true,
+            "@setting_sendData": true
+        };
     }
 
     getMyStringValue = async (item) => {
@@ -143,6 +153,20 @@ class SimuPage extends React.Component {
         }
     }
 
+    handleZoomChange = (domain, maxRightZoom) => {
+        console.log(domain, maxRightZoom)
+        if (Math.abs(maxRightZoom.x[0] - domain.x[0]) < 1) { // Condition if both values are closed : engage magnetism
+            this.setState({
+                zoomDomain: maxRightZoom,
+                autoPan: true
+            }),
+                console.log("locked")
+        }
+        else {
+            this.setState({ zoomDomain: domain, autoPan: false })
+        }
+    }
+
     updateSettings = (number, age, fixed_graph, sendData) => {
         this.setState({
             data: [],
@@ -168,11 +192,13 @@ class SimuPage extends React.Component {
         let setting_age = await this.getMyStringValue("@setting_age");
         let fixed_graph = await this.getMyStringValue("@setting_fixedGraph");
         let sendData = await this.getMyStringValue("@setting_sendData");
-        this.setState({ number: setting_number });
-        this.setState({ age: setting_age });
-        this.setState({ fixed_graph: String(fixed_graph) == 'true' });
-        this.setState({ sendData: String(sendData) == 'true' });
-        this.setState({ settings_loaded: true });
+        this.setState({
+            number: setting_number,
+            age: setting_age,
+            fixed_graph: String(fixed_graph) == 'true',
+            sendData: String(sendData) == 'true',
+            settings_loaded: true
+        });
         await requestLocationPermission();
         await Geolocation.getCurrentPosition((position) => {
             this.setState({ location: position })
@@ -183,14 +209,21 @@ class SimuPage extends React.Component {
         this.generateFakeData();
         const intervalId = BackgroundTimer.setInterval(() => {
             this.generateFakeData();
-        }, 2000);
+        }, 500);
     }
 
     render() {
+        const maxRightZoom = {
+            x: [
+                this.state.data[this.state.data.length - 1]?.x > 20 ? this.state.data[this.state.data.length - 1]?.x - 20 : 0,
+                this.state.data[this.state.data.length - 1]?.x > 20 ? this.state.data[this.state.data.length - 1]?.x : 20
+            ],
+            y: [0, 300]
+        }
         if (!this.state.settings_loaded) {
             return (
                 <ImageBackground style={styles.image} source={require('../assets/pictures/background_image.png')}>
-                    <Spinner type="ChasingDots" color="#80cc24" size={90} />
+                    <Spinner type="FadingCircleAlt" color="#80cc24" size={90} />
                 </ImageBackground>
             )
         }
@@ -202,18 +235,19 @@ class SimuPage extends React.Component {
                     <VictoryChart
                         style={styles.chart}
                         theme={VictoryTheme.material}
-                        containerComponent={<VictoryVoronoiContainer voronoiDimension="x" />}
-                    /*containerComponent={
-                        <VictoryVoronoiContainer
-                            labels={({ datum }) => `PM 1 : ${datum.PM1}, PM 2.5 : ${datum.PM25}`}
-                            labelComponent={
-                                <VictoryTooltip
-                                    style={{ fontSize: 10 }}
-                                />}
-                        //allowZoom={false}
-                        />
-
-                    }*/>
+                        containerComponent={
+                            <VictoryZoomContainer
+                                allowZoom={false}
+                                onZoomDomainChange={(domain) => { this.handleZoomChange(domain, maxRightZoom) }}
+                                zoomDomain={this.state.autoPan ? maxRightZoom : this.state.zoomDomain}
+                            /*zoomDomain={{
+                                x: [
+                                    this.state.data[this.state.data.length - 1]?.x > 20 ? this.state.data[this.state.data.length - 1]?.x - 20 : 0,
+                                    this.state.data[this.state.data.length - 1]?.x > 20 ? this.state.data[this.state.data.length - 1]?.x : 20
+                                ]
+                            }}*/
+                            />}
+                    >
                         <VictoryAxis
                             tickLabelComponent={<VictoryLabel dy={0} dx={10} angle={55} />}
                             tickFormat={(x) => ''} // Values displayed on the X axis
@@ -245,55 +279,28 @@ class SimuPage extends React.Component {
                                 }
                             }}
                         />
-                        <VictoryGroup
-                            labels={({ datum }) => `PM 2.5 : ${datum.PM25}`}
-                            labelComponent={
-                                <VictoryTooltip
-                                    flyoutPadding={7}
-                                    style={{ fontSize: '15px', padding: 5 }}
-                                    renderInPortal={false}
-                                    constrainToVisibleArea
-                                />
-                            }
-                            offset={1000}
-                        >
-
-                            <VictoryLine
-                                data={this.state.data}
-                                interpolation="natural"
-                                y="PM25"
-                                domain={{ y: this.state.fixed_graph ? [0, 300] : null }}
-                                style={{ data: { stroke: "#80cc24" } }}
-                            />
-                        </VictoryGroup>
-                        <VictoryGroup
-                            labels={({ datum }) => `PM 1 : ${datum.PM1}`}
-                            labelComponent={
-                                <VictoryTooltip
-                                    flyoutPadding={7}
-                                    style={{ fontSize: '15px' }}
-                                    renderInPortal={false}
-                                    constrainToVisibleArea
-                                />
-                            }
-                            offset={1000}
-                        >
-                            <VictoryLine
-                                data={this.state.data}
-                                interpolation="natural"
-                                y="PM1"
-                                domain={{ y: this.state.fixed_graph ? [0, 300] : null }}
-                                style={{ data: { stroke: "#eb9b34" } }}
-                            />
-                        </VictoryGroup>
+                        <VictoryLine
+                            data={this.state.data}
+                            interpolation="natural"
+                            y="PM25"
+                            domain={{ y: this.state.fixed_graph ? [0, 300] : null }}
+                            style={{ data: { stroke: "#80cc24" } }}
+                        />
+                        <VictoryLine
+                            data={this.state.data}
+                            interpolation="natural"
+                            y="PM1"
+                            domain={{ y: this.state.fixed_graph ? [0, 300] : null }}
+                            style={{ data: { stroke: "#eb9b34" } }}
+                        />
                     </VictoryChart >
                     <Button
-                        title="Changer les paramètres"
+                        title="Change parameters"
                         color="#80cc24"
                         onPress={() => this.props.navigation.navigate("SettingsPage", { defaultValues: this.defaultValues, updateSettings: this.updateSettings })}
                     />
-                    <Text style={styles.textWhite}>Age maximal des données : {this.state.age}</Text>
-                    <Text style={styles.textWhite}>Envoi des données toutes les : {this.state.number}</Text>
+                    <Text style={styles.textWhite}>Maximum age of data  : {this.state.age} s</Text>
+                    <Text style={styles.textWhite}>Send mean data every : {this.state.number} s</Text>
                 </ImageBackground >
             )
         }

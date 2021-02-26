@@ -17,7 +17,13 @@ class SettingsPage extends React.Component {
             fixed_graph: true,
             settings_loaded: false
         };
-        this.defaultValues = { "@setting_number": 15, "@setting_age": 30, "@setting_deviceName": "HC-05", "@setting_fixedGraph": true, "@setting_sendData": true };
+        this.defaultValues = {
+            "@setting_number": 15,
+            "@setting_age": 30,
+            "@setting_deviceName": "HC-05",
+            "@setting_fixedGraph": true,
+            "@setting_sendData": true
+        };
     }
 
     storeData = async (item, value) => {
@@ -61,7 +67,14 @@ class SettingsPage extends React.Component {
             let setting_deviceName = await this.getMyStringValue("@setting_deviceName");
             let setting_fixedGraph = await this.getMyStringValue("@setting_fixedGraph");
             let setting_sendData = await this.getMyStringValue("@setting_sendData");
-            this.setState({ number: setting_number, age: setting_age, deviceName: setting_deviceName, fixed_graph: setting_fixedGraph, sendData: setting_sendData, settings_loaded: true });
+            this.setState({
+                number: setting_number,
+                age: setting_age,
+                deviceName: setting_deviceName,
+                fixed_graph: setting_fixedGraph,
+                sendData: setting_sendData,
+                settings_loaded: true
+            });
         }
         catch (e) {
             console.log(e)
@@ -72,7 +85,7 @@ class SettingsPage extends React.Component {
         if (!this.state.settings_loaded) {
             return (
                 <ImageBackground style={styles.image} source={require('../assets/pictures/background_image.png')}>
-                    <Spinner type="ChasingDots" color="#80cc24" size={90} />
+                    <Spinner type="FadingCircleAlt" color="#80cc24" size={90} />
                 </ImageBackground>
             )
         }
@@ -81,7 +94,7 @@ class SettingsPage extends React.Component {
                 <ImageBackground style={styles.image} source={require('../assets/pictures/background_image.png')}>
                     <View style={styles.mainView}>
                         <Text style={styles.textWhite} >
-                            Age maximal des données
+                            Maximum age of data
                     </Text>
                         <Slider
                             value={Number(this.state.age)}
@@ -97,7 +110,7 @@ class SettingsPage extends React.Component {
 
                         <View style={styles.container}>
                             <Text style={styles.textWhite}>
-                                Envoyer des données toutes les :
+                                Send mean data every
                         </Text>
                             <Slider
                                 value={Number(this.state.number)}
