@@ -340,12 +340,14 @@ class HomePage extends React.Component {
             <ImageBackground style={styles.image} source={require('../assets/pictures/background_image.png')}>
                 <TouchableOpacity
                     onPress={() => this.props.navigation.navigate("SettingsPage", { defaultValues: this.defaultValues, updateSettings: this.updateSettings, origin: "HomePage" })}
+                    style={styles.icon_button}
                 >
                     <Image
                         source={require('../assets/icons/settings-gears.png')}
                         style={styles.icon} />
+                    <View style={{ flex: 5 }}></View>
                 </TouchableOpacity>
-                <View style={{ flex: 1, flexDirection: 'column', alignItems: 'center' }}>
+                <View style={{ flex: 7, flexDirection: 'column', alignItems: 'center' }}>
                     <Button
                         title="Simulateur"
                         onPress={() => { this.props.navigation.navigate("SimuPage", { hc05ID: this.state.deviceID, }) }}
@@ -397,8 +399,15 @@ const styles = StyleSheet.create({
         alignSelf: 'center'
     },
     icon: {
-        width: 50,
-        height: 50
+        width: 70,
+        height: 70,
+        flex: 1,
+        padding: 7
+    },
+    icon_button: {
+        flex: 1,
+        flexDirection: "row",
+        padding: 5
     }
 });
 

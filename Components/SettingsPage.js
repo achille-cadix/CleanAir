@@ -1,6 +1,6 @@
 import React from 'react';
 import Slider from '@react-native-community/slider';
-import { StyleSheet, View, Text, Button, ImageBackground, TextInput, BackHandler } from 'react-native';
+import { StyleSheet, View, Text, ImageBackground, TextInput, BackHandler, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from "react-native-toast";
 import CheckBox from '@react-native-community/checkbox';
@@ -59,6 +59,7 @@ class SettingsPage extends React.Component {
         await this.storeData('@setting_deviceName', this.state.deviceName);
         await this.storeData('@setting_fixedGraph', this.state.fixed_graph);
         await this.storeData('@setting_sendData', this.state.sendData);
+        this.backHandler.remove();
         this.props.navigation.goBack();
     }
 
@@ -67,7 +68,6 @@ class SettingsPage extends React.Component {
             "hardwareBackPress",
             this.handleLeave
         );
-
         try {
             let setting_number = await this.getMyStringValue("@setting_number");
             let setting_age = await this.getMyStringValue("@setting_age");
@@ -80,7 +80,9 @@ class SettingsPage extends React.Component {
                 deviceName: setting_deviceName,
                 fixed_graph: setting_fixedGraph,
                 sendData: setting_sendData,
-                settings_loaded: true
+                settings_loaded: true,
+                number_slider: setting_number,
+                age_slider: setting_age
             });
         }
         catch (e) {
@@ -99,70 +101,72 @@ class SettingsPage extends React.Component {
         else {
             return (
                 <ImageBackground style={styles.image} source={require('../assets/pictures/background_image.png')}>
-                    <View style={styles.mainView}>
-                        <Text style={styles.textWhite} >
-                            Maximum age of data
+                    <ScrollView>
+                        <View style={styles.mainView}>
+                            <Text style={styles.textWhite} >
+                                Maximum age of data
                     </Text>
-                        <Slider
-                            value={Number(this.state.age_slider)}
-                            style={styles.slider}
-                            onSlidingComplete={(value) => this.setState({ age_slider: value })}
-                            onValueChange={(value) => this.setState({ age: value })}
-                            minimumValue={5}
-                            maximumValue={60}
-                            step={1}
-                        />
-                        <Text style={styles.textWhite}>
-                            {this.state.age}
-                        </Text>
-
-                        <View style={styles.container}>
-                            <Text style={styles.textWhite}>
-                                Send mean data every
-                        </Text>
                             <Slider
-                                value={Number(this.state.number_slider)}
+                                value={Number(this.state.age_slider)}
                                 style={styles.slider}
-                                onSlidingComplete={(value) => this.setState({ number_slider: value })}
-                                onValueChange={(value) => this.setState({ number: value })}
+                                onSlidingComplete={(value) => this.setState({ age_slider: value })}
+                                onValueChange={(value) => this.setState({ age: value })}
                                 minimumValue={5}
-                                maximumValue={30}
+                                maximumValue={60}
                                 step={1}
                             />
                             <Text style={styles.textWhite}>
-                                {this.state.number}
+                                {this.state.age}
                             </Text>
-                        </View>
-                        <View style={styles.container}>
+
+                            <View style={styles.container}>
+                                <Text style={styles.textWhite}>
+                                    Send mean data every
+                        </Text>
+                                <Slider
+                                    value={Number(this.state.number_slider)}
+                                    style={styles.slider}
+                                    onSlidingComplete={(value) => this.setState({ number_slider: value })}
+                                    onValueChange={(value) => this.setState({ number: value })}
+                                    minimumValue={5}
+                                    maximumValue={30}
+                                    step={1}
+                                />
+                                <Text style={styles.textWhite}>
+                                    {this.state.number}
+                                </Text>
+                            </View>
+                            <View style={styles.container}>
+                                <Text style={styles.textWhite}>
+                                    Fixed axis on the graph :
+                        </Text>
+                                <CheckBox
+                                    style={{ color: "#ffffff" }}
+                                    value={String(this.state.fixed_graph) == 'true'}
+                                    onValueChange={(value) => this.setState({ fixed_graph: value })}
+                                />
+                            </View>
+                            <View style={styles.container}>
+                                <Text style={styles.textWhite}>
+                                    Send data to the Cloud :
+                        </Text>
+                                <CheckBox
+                                    style={{ color: "#ffffff" }}
+                                    value={String(this.state.sendData) == 'true'}
+                                    onValueChange={(value) => this.setState({ sendData: value })}
+                                />
+                            </View>
                             <Text style={styles.textWhite}>
-                                Fixed axis on the graph :
+                                Device's name :
                         </Text>
-                            <CheckBox
-                                style={{ color: "#ffffff" }}
-                                value={String(this.state.fixed_graph) == 'true'}
-                                onValueChange={(value) => this.setState({ fixed_graph: value })}
-                            />
+                            <View style={styles.textInputStyle}>
+                                <TextInput
+                                    defaultValue={this.state.deviceName}
+                                    onChangeText={(text) => this.setState({ deviceName: text })}
+                                />
+                            </View>
                         </View>
-                        <View style={styles.container}>
-                            <Text style={styles.textWhite}>
-                                Send data to the Cloud :
-                        </Text>
-                            <CheckBox
-                                style={{ color: "#ffffff" }}
-                                value={String(this.state.sendData) == 'true'}
-                                onValueChange={(value) => this.setState({ sendData: value })}
-                            />
-                        </View>
-                        <Text style={styles.textWhite}>
-                            Device's name :
-                        </Text>
-                        <View style={styles.textInputStyle}>
-                            <TextInput
-                                defaultValue={this.state.deviceName}
-                                onChangeText={(text) => this.setState({ deviceName: text })}
-                            />
-                        </View>
-                    </View>
+                    </ScrollView>
                 </ImageBackground>
             )
         }
@@ -178,7 +182,8 @@ const styles = StyleSheet.create({
     },
     slider: {
         color: "#80cc24",
-        width: 250
+        width: 250,
+        margin: 10
     },
     container: {
         flex: 1,
@@ -188,7 +193,8 @@ const styles = StyleSheet.create({
     textWhite: {
         color: '#ffffff',
         fontFamily: 'sharetech',
-        fontSize: 20
+        fontSize: 20,
+        margin: 10
     },
     button: {
         marginTop: 300

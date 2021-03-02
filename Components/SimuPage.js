@@ -1,6 +1,6 @@
 import React from 'react';
-import { StyleSheet, View, Text, Button, PermissionsAndroid, ImageBackground, BackHandler } from 'react-native';
-import { VictoryAxis, VictoryChart, VictoryTheme, VictoryLabel, VictoryLine, VictoryZoomContainer, VictoryPortal, VictoryTooltip, VictoryGroup, VictoryContainer } from "victory-native";
+import { StyleSheet, View, Text, Button, PermissionsAndroid, ImageBackground, BackHandler, TouchableOpacity, Image } from 'react-native';
+import { VictoryAxis, VictoryChart, VictoryTheme, VictoryLabel, VictoryLine, VictoryZoomContainer } from "victory-native";
 import Toast from "react-native-toast";
 import BluetoothSerial, {
     withSubscription
@@ -193,7 +193,8 @@ class SimuPage extends React.Component {
 
     handleLeave = async () => {
         BackgroundTimer.clearInterval(this.state.backGroundTask);
-        this.setState({ backGroundTask: null })
+        this.setState({ backGroundTask: null });
+        this.backHandler.remove();
         this.props.navigation.goBack();
     }
 
@@ -249,8 +250,19 @@ class SimuPage extends React.Component {
         else {
             return (
                 <ImageBackground style={styles.image} source={require('../assets/pictures/background_image.png')}>
-                    <Text style={styles.textPM}>PM2.5 : {this.state.data[this.state.data.length - 1]?.PM25} µg/m³</Text>
-                    <Text style={styles.textPM}>PM1 : {this.state.data[this.state.data.length - 1]?.PM1} µg/m³</Text>
+                    <TouchableOpacity
+                        onPress={() => this.props.navigation.navigate("SettingsPage", { defaultValues: this.defaultValues, updateSettings: this.updateSettings, origin: "ChartPage" })}
+                        style={styles.icon_button}
+                    >
+                        <Image
+                            source={require('../assets/icons/settings-gears.png')}
+                            style={styles.icon} />
+                        <View style={{ flex: 5 }}></View>
+                    </TouchableOpacity>
+                    <View style={styles.textContainer}>
+                        <Text style={styles.textPM}>PM2.5 : {this.state.data[this.state.data.length - 1]?.PM25} µg/m³</Text>
+                        <Text style={styles.textPM}>PM1 : {this.state.data[this.state.data.length - 1]?.PM1} µg/m³</Text>
+                    </View>
                     <VictoryChart
                         style={styles.chart}
                         theme={VictoryTheme.material}
@@ -313,11 +325,6 @@ class SimuPage extends React.Component {
                             style={{ data: { stroke: "#eb9b34" } }}
                         />
                     </VictoryChart >
-                    <Button
-                        title="Change parameters"
-                        color="#80cc24"
-                        onPress={() => this.props.navigation.navigate("SettingsPage", { defaultValues: this.defaultValues, updateSettings: this.updateSettings })}
-                    />
                     <Text style={styles.textWhite}>Maximum age of data  : {this.state.age} s</Text>
                     <Text style={styles.textWhite}>Send mean data every : {this.state.number} s</Text>
                 </ImageBackground >
@@ -345,14 +352,28 @@ const styles = StyleSheet.create({
     textWhite: {
         color: '#ffffff',
         fontFamily: 'sharetech',
-        fontSize: 20,
-        padding: 10
+        fontSize: 20
+    },
+    textContainer: {
+        flex: 1
     },
     textPM: {
         color: '#ffffff',
         fontFamily: 'sharetech',
         fontSize: 37,
-        padding: 5
+        margin: 5,
+        flex: 1
+    },
+    icon: {
+        width: 70,
+        height: 70,
+        flex: 1,
+        padding: 7
+    },
+    icon_button: {
+        flex: 1,
+        flexDirection: "row",
+        margin: 5
     }
 });
 
