@@ -6,19 +6,29 @@ import BluetoothSerial, {
 } from "react-native-bluetooth-serial-next";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+function hideToasts() {
+    Toast.hide();
+}
 
 class HomePage extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
             isEnabled: false,
-            device: null,
+            deviceName: "HC-05",
             devices: [],
             scanning: false,
             processing: false,
             unpairedDevices: [],
             deviceID: null,
             connected: false
+        };
+        this.defaultValues = {
+            "@setting_number": 15,
+            "@setting_age": 30,
+            "@setting_deviceName": "HC-05",
+            "@setting_fixedGraph": true,
+            "@setting_sendData": true
         };
     }
 
@@ -27,6 +37,7 @@ class HomePage extends React.Component {
             await BluetoothSerial.requestEnable();
             this.setState({ isEnabled: true });
         } catch (e) {
+            hideToasts();
             Toast.showShortBottom(e.message);
         }
     };
@@ -39,6 +50,7 @@ class HomePage extends React.Component {
                 await BluetoothSerial.disable();
             }
         } catch (e) {
+            hideToasts();
             Toast.showShortBottom(e.message);
         }
     };
@@ -63,6 +75,7 @@ class HomePage extends React.Component {
                 })
             }));
         } catch (e) {
+            hideToasts();
             Toast.showShortBottom(e.message);
         }
     };
@@ -91,6 +104,7 @@ class HomePage extends React.Component {
                 }))
             }))
         } catch (e) {
+            hideToasts();
             Toast.showShortBottom(e.message);
 
             this.setState(({ devices }) => ({
@@ -105,6 +119,7 @@ class HomePage extends React.Component {
             await BluetoothSerial.cancelDiscovery();
             this.setState({ scanning: false });
         } catch (e) {
+            hideToasts();
             Toast.showShortBottom(e.message);
         }
     };
@@ -123,6 +138,7 @@ class HomePage extends React.Component {
 
             const paired = await BluetoothSerial.pairDevice(id);
             if (paired) {
+                hideToasts();
                 Toast.showShortBottom(
                     `Device ${paired.name}<${paired.id}> paired successfully`
                 );
@@ -147,10 +163,12 @@ class HomePage extends React.Component {
                     })
                 }));
             } else {
+                hideToasts();
                 Toast.showShortBottom(`Device <${id}> pairing failed`);
                 this.setState({ processing: false });
             }
         } catch (e) {
+            hideToasts();
             Toast.showShortBottom(e.message);
             this.setState({ processing: false });
         }
@@ -171,6 +189,7 @@ class HomePage extends React.Component {
             const connected = await BluetoothSerial.device(id).connect();
 
             if (connected) {
+                hideToasts();
                 Toast.showShortBottom(
                     `Connected to device ${connected.name}<${connected.id}>`
                 );
@@ -196,10 +215,12 @@ class HomePage extends React.Component {
                     })
                 }));
             } else {
+                hideToasts();
                 Toast.showShortBottom(`Failed to connect to device <${id}>`);
                 this.setState({ processing: false, connected: false });
             }
         } catch (e) {
+            hideToasts();
             Toast.showShortBottom(e.message);
             this.setState({ processing: false });
         }
@@ -229,6 +250,7 @@ class HomePage extends React.Component {
                 })
             }));
         } catch (e) {
+            hideToasts();
             Toast.showShortBottom(e.message);
             this.setState({ processing: false });
         }
@@ -242,29 +264,38 @@ class HomePage extends React.Component {
                     this.props.navigation.navigate("ChartPage", { deviceID: this.state.deviceID, connect: this.connect });
                 }
                 else {
+                    hideToasts();
                     Toast.showShortBottom("Unable to connect to Bluetooth device");
                     this.connectToDevice();
                 }
             }
             else {
+                hideToasts();
                 Toast.showShortBottom("HC05 not found or paired, check if it and the Bluetooth is turned on, or wait for pairing");
             }
         }
         catch (e) {
+            hideToasts();
             Toast.showShortBottom("HC05 not found or paired, check if it and the Bluetooth is turned on, or wait for pairing");
         }
+    }
+
+    updateSettings = (deviceName) => {
+        this.setState({ deviceName: deviceName });
+        this.forceUpdate();
     }
 
     pairToDevice = async () => {
         if (this.state.deviceID === null || this.state.deviceID === undefined) {
             await this.discoverUnpairedDevices();
-            let deviceID = this.state.unpairedDevices.find(x => x.name === "HC-05")?.id;
+            let deviceID = this.state.unpairedDevices.find(x => x.name === this.state.deviceName)?.id;
             if (deviceID) {
                 await this.pairDevice(deviceID);
                 this.setState({ deviceID: deviceID });
                 this.connectToDevice();
             }
             else {
+                hideToasts();
                 Toast.showShortBottom("HC05 not found during scan, re-trying")
                 this.pairToDevice();
             }
@@ -287,18 +318,19 @@ class HomePage extends React.Component {
                 }))
             });
             let deviceName = await this.getDeviceName();
-            let deviceID = this.state.devices.find(x => x.name === deviceName)?.id;
-            this.setState({
-                deviceID: deviceID
-            });
+            this.setState({ deviceName: deviceName })
+            let deviceID = this.state.devices.find(x => x.name === this.state.deviceName)?.id;
+            this.setState({ deviceID: deviceID });
             if (deviceID) {
                 this.connectToDevice();
             }
             else {
-                Toast.showShortBottom(deviceName + ' not paired or found, please wait for automatic connection');
+                hideToasts();
+                Toast.showShortBottom(this.state.deviceName + ' not paired or found, please wait for automatic connection');
                 this.pairToDevice();
             }
         } catch (e) {
+            hideToasts();
             Toast.showShortBottom(e.message);
         }
     }
@@ -306,6 +338,13 @@ class HomePage extends React.Component {
     render() {
         return (
             <ImageBackground style={styles.image} source={require('../assets/pictures/background_image.png')}>
+                <TouchableOpacity
+                    onPress={() => this.props.navigation.navigate("SettingsPage", { defaultValues: this.defaultValues, updateSettings: this.updateSettings, origin: "HomePage" })}
+                >
+                    <Image
+                        source={require('../assets/icons/settings-gears.png')}
+                        style={styles.icon} />
+                </TouchableOpacity>
                 <View style={{ flex: 1, flexDirection: 'column', alignItems: 'center' }}>
                     <Button
                         title="Simulateur"
@@ -317,7 +356,7 @@ class HomePage extends React.Component {
                     >
                         <View style={styles.touchableInside}>
                             <Image style={styles.pmImage} source={require('../assets/pictures/PMSensor.png')} />
-                            <Text style={styles.textTitle}>Connect to HC-05</Text>
+                            <Text style={styles.textTitle}>Connect to {this.state.deviceName}</Text>
                         </View>
                     </TouchableOpacity>
                 </View>
@@ -356,6 +395,10 @@ const styles = StyleSheet.create({
         fontSize: 30,
         flex: 1,
         alignSelf: 'center'
+    },
+    icon: {
+        width: 50,
+        height: 50
     }
 });
 

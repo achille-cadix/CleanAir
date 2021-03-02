@@ -15,7 +15,9 @@ class SettingsPage extends React.Component {
             age: 30,
             deviceName: "HC-05",
             fixed_graph: true,
-            settings_loaded: false
+            settings_loaded: false,
+            number_slider: 15,
+            age_slider: 30
         };
         this.defaultValues = {
             "@setting_number": 15,
@@ -46,7 +48,12 @@ class SettingsPage extends React.Component {
     }
 
     handleLeave = async () => {
-        this.props.navigation.state.params.updateSettings(this.state.number, this.state.age, this.state.fixed_graph, this.state.sendData);
+        if (this.props.navigation.state.params.origin === "HomePage") {
+            this.props.navigation.state.params.updateSettings(this.state.deviceName);
+        }
+        else {
+            this.props.navigation.state.params.updateSettings(this.state.number, this.state.age, this.state.fixed_graph, this.state.sendData);
+        }
         await this.storeData('@setting_number', this.state.number);
         await this.storeData('@setting_age', this.state.age);
         await this.storeData('@setting_deviceName', this.state.deviceName);
@@ -97,8 +104,9 @@ class SettingsPage extends React.Component {
                             Maximum age of data
                     </Text>
                         <Slider
-                            value={Number(this.state.age)}
+                            value={Number(this.state.age_slider)}
                             style={styles.slider}
+                            onSlidingComplete={(value) => this.setState({ age_slider: value })}
                             onValueChange={(value) => this.setState({ age: value })}
                             minimumValue={5}
                             maximumValue={60}
@@ -113,8 +121,9 @@ class SettingsPage extends React.Component {
                                 Send mean data every
                         </Text>
                             <Slider
-                                value={Number(this.state.number)}
+                                value={Number(this.state.number_slider)}
                                 style={styles.slider}
+                                onSlidingComplete={(value) => this.setState({ number_slider: value })}
                                 onValueChange={(value) => this.setState({ number: value })}
                                 minimumValue={5}
                                 maximumValue={30}

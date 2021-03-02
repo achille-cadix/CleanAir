@@ -13,6 +13,9 @@ import RNAndroidLocationEnabler from 'react-native-android-location-enabler';
 const url = "https://enjl220ffgif30o.m.pipedream.net";
 import Spinner from "react-native-spinkit";
 
+function hideToasts() {
+    Toast.hide();
+}
 
 const requestLocationPermission = async () => {
     const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
@@ -38,7 +41,8 @@ class SimuPage extends React.Component {
             zoomDomain: {
                 x: [0, 20], y: [0, 300]
             },
-            autoPan: true
+            autoPan: true,
+            backGroundTask: null
         }
         this.defaultValues = {
             "@setting_number": 15,
@@ -96,6 +100,7 @@ class SimuPage extends React.Component {
         }
         catch (e) {
             if (e instanceof TypeError) {
+                hideToasts();
                 Toast.showShortBottom("Location not found, please check that your location is activated");
             }
             console.log(e);
@@ -109,7 +114,10 @@ class SimuPage extends React.Component {
                 latitude: this.state.location.coords.latitude,
             };
             console.log(body);
-            axios({ method: 'post', url: url, data: body }).catch((e) => Toast.showShortBottom("Could not send data to internet, please check your network"));
+            axios({ method: 'post', url: url, data: body }).catch((e) => {
+                hideToasts();
+                Toast.showShortBottom("Could not send data to internet, please check your network");
+            });
         }
         catch (e) {
             console.log(e)
@@ -127,6 +135,7 @@ class SimuPage extends React.Component {
             }
             catch (e) {
                 if (e instanceof TypeError) {
+                    hideToasts();
                     Toast.showShortBottom("Location not found, please check that your location is activated");
                 }
                 console.log(e);
@@ -145,7 +154,10 @@ class SimuPage extends React.Component {
                     latitude: this.state.location.coords.latitude,
                 }
                 console.log(body);
-                axios({ method: 'post', url: url, data: body }).catch((e) => Toast.showShortBottom("Could not send data to internet, please check your network"));
+                axios({ method: 'post', url: url, data: body }).catch((e) => {
+                    hideToasts();
+                    Toast.showShortBottom("Could not send data to internet, please check your network");
+                });
             }
             catch (e) {
                 console.log(e)
@@ -179,10 +191,15 @@ class SimuPage extends React.Component {
         this.forceUpdate();
     }
 
+    handleLeave = async () => {
+        BackgroundTimer.clearInterval(this.state.backGroundTask);
+        this.setState({ backGroundTask: null })
+        this.props.navigation.goBack();
+    }
+
     async componentDidMount() {
         this.backHandler = BackHandler.addEventListener(
-            "hardwareBackPress",
-            this.props.navigation.goBack
+            "hardwareBackPress", this.handleLeave
         );
         RNAndroidLocationEnabler.promptForEnableLocationIfNeeded({
             interval: 10000,
@@ -207,9 +224,11 @@ class SimuPage extends React.Component {
             { enableHighAccuracy: false, timeout: 5000 });
         const startTime = new Date();
         this.generateFakeData();
-        const intervalId = BackgroundTimer.setInterval(() => {
-            this.generateFakeData();
-        }, 500);
+        this.setState({
+            backGroundTask: BackgroundTimer.setInterval(() => {
+                this.generateFakeData();
+            }, 500)
+        })
     }
 
     render() {
