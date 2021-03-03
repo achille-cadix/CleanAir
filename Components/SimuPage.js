@@ -225,7 +225,7 @@ class SimuPage extends React.Component {
         this.setState({
             backGroundTask: BackgroundTimer.setInterval(() => {
                 this.generateFakeData();
-            }, 500)
+            }, 2000)
         })
     }
 
