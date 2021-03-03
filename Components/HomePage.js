@@ -1,9 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, Text, Button, ImageBackground, TouchableOpacity, Image } from 'react-native';
 import Toast from "react-native-toast";
-import BluetoothSerial, {
-    withSubscription
-} from "react-native-bluetooth-serial-next";
+import BluetoothSerial from "react-native-bluetooth-serial-next";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 function hideToasts() {

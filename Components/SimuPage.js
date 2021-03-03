@@ -1,10 +1,7 @@
 import React from 'react';
-import { StyleSheet, View, Text, Button, PermissionsAndroid, ImageBackground, BackHandler, TouchableOpacity, Image } from 'react-native';
+import { StyleSheet, View, Text, PermissionsAndroid, ImageBackground, BackHandler, TouchableOpacity, Image, Button, TouchableOpacityBase } from 'react-native';
 import { VictoryAxis, VictoryChart, VictoryTheme, VictoryLabel, VictoryLine, VictoryZoomContainer } from "victory-native";
 import Toast from "react-native-toast";
-import BluetoothSerial, {
-    withSubscription
-} from "react-native-bluetooth-serial-next";
 import Geolocation from '@react-native-community/geolocation';
 import axios from 'axios';
 import BackgroundTimer from 'react-native-background-timer';
@@ -232,6 +229,33 @@ class SimuPage extends React.Component {
         })
     }
 
+    backToCurrent = () => {
+        if (!this.state.autoPan) {
+            return (
+                <TouchableOpacity
+                    style={styles.goBackButton_enabled}
+                    onPress={
+                        () => {
+                            this.setState({ autoPan: true })
+                        }
+                    }
+                >
+                    <Text style={styles.goBackButtonText}>Return to current values</Text>
+                </TouchableOpacity>
+            )
+        }
+        else {
+            return (
+                <View
+                    style={styles.goBackButton_disabled}
+
+                >
+                    <Text style={styles.goBackButtonText}>Live values displayed</Text>
+                </View>
+            )
+        }
+    }
+
     render() {
         const maxRightZoom = {
             x: [
@@ -263,70 +287,72 @@ class SimuPage extends React.Component {
                         <Text style={styles.textPM}>PM2.5 : {this.state.data[this.state.data.length - 1]?.PM25} µg/m³</Text>
                         <Text style={styles.textPM}>PM1 : {this.state.data[this.state.data.length - 1]?.PM1} µg/m³</Text>
                     </View>
-                    <VictoryChart
-                        style={styles.chart}
-                        theme={VictoryTheme.material}
-                        containerComponent={
-                            <VictoryZoomContainer
-                                allowZoom={false}
-                                onZoomDomainChange={(domain) => { this.handleZoomChange(domain, maxRightZoom) }}
-                                zoomDomain={this.state.autoPan ? maxRightZoom : this.state.zoomDomain}
-                            /*zoomDomain={{
-                                x: [
-                                    this.state.data[this.state.data.length - 1]?.x > 20 ? this.state.data[this.state.data.length - 1]?.x - 20 : 0,
-                                    this.state.data[this.state.data.length - 1]?.x > 20 ? this.state.data[this.state.data.length - 1]?.x : 20
-                                ]
-                            }}*/
-                            />}
-                    >
-                        <VictoryAxis
-                            tickLabelComponent={<VictoryLabel dy={0} dx={10} angle={55} />}
-                            tickFormat={(x) => ''} // Values displayed on the X axis
-                            style={{
-                                axis: {
-                                    stroke: 'white'  //CHANGE COLOR OF X-AXIS
-                                },
-                                tickLabels: {
-                                    fill: 'white' //CHANGE COLOR OF X-AXIS LABELS
-                                },
-                                grid: {
-                                    stroke: 'none' //CHANGE COLOR OF X-AXIS GRID LINES
-                                }
-                            }}
-                        />
-                        <VictoryAxis
-                            dependentAxis
-                            tickFormat={(y) => y}
-                            style={{
-                                axis: {
-                                    stroke: 'white'  //CHANGE COLOR OF Y-AXIS
-                                },
-                                tickLabels: {
-                                    fill: 'white' //CHANGE COLOR OF Y-AXIS LABELS
-                                },
-                                grid: {
-                                    stroke: 'white', //CHANGE COLOR OF Y-AXIS GRID LINES
-                                    strokeDasharray: '7',
-                                }
-                            }}
-                        />
-                        <VictoryLine
-                            data={this.state.data}
-                            interpolation="natural"
-                            y="PM25"
-                            domain={{ y: this.state.fixed_graph ? [0, 300] : null }}
-                            style={{ data: { stroke: "#80cc24" } }}
-                        />
-                        <VictoryLine
-                            data={this.state.data}
-                            interpolation="natural"
-                            y="PM1"
-                            domain={{ y: this.state.fixed_graph ? [0, 300] : null }}
-                            style={{ data: { stroke: "#eb9b34" } }}
-                        />
-                    </VictoryChart >
-                    <Text style={styles.textWhite}>Maximum age of data  : {this.state.age} s</Text>
-                    <Text style={styles.textWhite}>Send mean data every : {this.state.number} s</Text>
+                    <View style={styles.chartContainer}>
+                        {this.backToCurrent()}
+                        <VictoryChart
+                            style={styles.chart}
+                            theme={VictoryTheme.material}
+                            containerComponent={
+                                <VictoryZoomContainer
+                                    allowZoom={false}
+                                    allowPan={this.state.data.length > 20}
+                                    onZoomDomainChange={(domain) => { this.handleZoomChange(domain, maxRightZoom) }}
+                                    zoomDomain={this.state.autoPan ? maxRightZoom : this.state.zoomDomain}
+                                /*zoomDomain={{
+                                    x: [
+                                        this.state.data[this.state.data.length - 1]?.x > 20 ? this.state.data[this.state.data.length - 1]?.x - 20 : 0,
+                                        this.state.data[this.state.data.length - 1]?.x > 20 ? this.state.data[this.state.data.length - 1]?.x : 20
+                                    ]
+                                }}*/
+                                />}
+                        >
+                            <VictoryAxis
+                                tickLabelComponent={<VictoryLabel dy={0} dx={10} angle={55} />}
+                                tickFormat={(x) => ''} // Values displayed on the X axis
+                                style={{
+                                    axis: {
+                                        stroke: 'white'  //CHANGE COLOR OF X-AXIS
+                                    },
+                                    tickLabels: {
+                                        fill: 'white' //CHANGE COLOR OF X-AXIS LABELS
+                                    },
+                                    grid: {
+                                        stroke: 'none' //CHANGE COLOR OF X-AXIS GRID LINES
+                                    }
+                                }}
+                            />
+                            <VictoryAxis
+                                dependentAxis
+                                tickFormat={(y) => y}
+                                style={{
+                                    axis: {
+                                        stroke: 'white'  //CHANGE COLOR OF Y-AXIS
+                                    },
+                                    tickLabels: {
+                                        fill: 'white' //CHANGE COLOR OF Y-AXIS LABELS
+                                    },
+                                    grid: {
+                                        stroke: 'white', //CHANGE COLOR OF Y-AXIS GRID LINES
+                                        strokeDasharray: '7',
+                                    }
+                                }}
+                            />
+                            <VictoryLine
+                                data={this.state.data}
+                                interpolation="natural"
+                                y="PM25"
+                                domain={{ y: this.state.fixed_graph ? [0, 300] : null }}
+                                style={{ data: { stroke: "#80cc24" } }}
+                            />
+                            <VictoryLine
+                                data={this.state.data}
+                                interpolation="natural"
+                                y="PM1"
+                                domain={{ y: this.state.fixed_graph ? [0, 300] : null }}
+                                style={{ data: { stroke: "#eb9b34" } }}
+                            />
+                        </VictoryChart >
+                    </View>
                 </ImageBackground >
             )
         }
@@ -346,22 +372,54 @@ const styles = StyleSheet.create({
         alignItems: "center",
         backgroundColor: "#f5fcff"
     },
+    chartContainer: {
+        flex: 7,
+        flexDirection: "column",
+        alignItems: "flex-end"
+    },
     chart: {
-        flex: 1,
+        flex: 1
+    },
+    goBackButton_enabled: {
+        width: 220,
+        height: 50,
+        justifyContent: "center",
+        backgroundColor: "#80cc24",
+        marginTop: 5,
+        marginBottom: -30,
+        marginRight: 20
+    },
+    goBackButton_disabled: {
+        width: 220,
+        height: 50,
+        justifyContent: "center",
+        backgroundColor: "grey",
+        marginTop: 5,
+        marginBottom: -30,
+        marginRight: 20
+    },
+    goBackButtonText: {
+        color: '#ffffff',
+        fontFamily: 'sharetech',
+        fontSize: 20,
+        padding: 2,
+        textAlign: "center"
     },
     textWhite: {
         color: '#ffffff',
         fontFamily: 'sharetech',
-        fontSize: 20
+        fontSize: 20,
+        justifyContent: "center"
     },
     textContainer: {
-        flex: 1
+        flex: 2,
+        marginTop: 10
     },
     textPM: {
         color: '#ffffff',
         fontFamily: 'sharetech',
-        fontSize: 37,
-        margin: 5,
+        fontSize: 30,
+        marginBottom: 0,
         flex: 1
     },
     icon: {

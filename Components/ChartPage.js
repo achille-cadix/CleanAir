@@ -2,9 +2,7 @@ import React from 'react';
 import { StyleSheet, View, Text, Button, PermissionsAndroid, ImageBackground, BackHandler } from 'react-native';
 import { VictoryAxis, VictoryChart, VictoryTheme, VictoryLabel, VictoryLine } from "victory-native";
 import Toast from "react-native-toast";
-import BluetoothSerial, {
-    withSubscription
-} from "react-native-bluetooth-serial-next";
+import BluetoothSerial from "react-native-bluetooth-serial-next";
 import Geolocation from '@react-native-community/geolocation';
 import axios from 'axios';
 import BackgroundTimer from 'react-native-background-timer';
