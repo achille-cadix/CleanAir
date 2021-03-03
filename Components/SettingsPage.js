@@ -1,6 +1,6 @@
 import React from 'react';
 import Slider from '@react-native-community/slider';
-import { StyleSheet, View, Text, ImageBackground, TextInput, BackHandler, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, ImageBackground, TextInput, BackHandler, ScrollView, TouchableOpacity, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from "react-native-toast";
 import CheckBox from '@react-native-community/checkbox';
@@ -101,6 +101,15 @@ class SettingsPage extends React.Component {
         else {
             return (
                 <ImageBackground style={styles.image} source={require('../assets/pictures/background_image.png')}>
+                    <TouchableOpacity
+                        onPress={() => { this.handleLeave() }}
+                        style={styles.icon_button}
+                    >
+                        <Image
+                            source={require('../assets/icons/back-arrow-white.png')}
+                            style={styles.icon} />
+                        <View style={{ flex: 10 }}></View>
+                    </TouchableOpacity>
                     <ScrollView>
                         <View style={styles.mainView}>
                             <Text style={styles.textWhite} >
@@ -212,6 +221,17 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: "center",
         padding: 50
+    },
+    icon: {
+        width: 40,
+        height: 40,
+        flex: 1,
+        padding: 7,
+        margin: 20
+    },
+    icon_button: {
+        flex: 1,
+        flexDirection: "row"
     }
 });
 

@@ -341,7 +341,7 @@ class HomePage extends React.Component {
                     style={styles.icon_button}
                 >
                     <Image
-                        source={require('../assets/icons/settings-gears.png')}
+                        source={require('../assets/icons/settings-gears-white.png')}
                         style={styles.icon} />
                     <View style={{ flex: 5 }}></View>
                 </TouchableOpacity>
