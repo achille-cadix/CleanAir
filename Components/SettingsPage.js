@@ -223,15 +223,15 @@ const styles = StyleSheet.create({
         padding: 50
     },
     icon: {
-        width: 40,
-        height: 40,
+        height: 25,
         flex: 1,
-        padding: 7,
-        margin: 20
+        padding: 0,
+        margin: 0
     },
     icon_button: {
         flex: 1,
-        flexDirection: "row"
+        flexDirection: "row",
+        padding: 20
     }
 });
 

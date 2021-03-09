@@ -60,12 +60,12 @@ class SimuPage extends React.Component {
     }
 
     generateFakeData = async () => {
-        let fakeData = (Math.random() * 255).toFixed(2);
+        let fakeData = (Math.random() * 255).toFixed(0);
         let receptionTime = +new Date;
         this.setState({
             unansweredCalls: 0,
             valuesReceived: this.state.valuesReceived + 1,
-            data: [...this.state?.data, { x: this.state.valuesReceived, PM25: parseFloat(fakeData), PM1: parseFloat((fakeData * Math.random()).toFixed(2)), timestamp: receptionTime }]
+            data: [...this.state?.data, { x: this.state.valuesReceived, PM25: parseFloat(fakeData), PM1: parseFloat((fakeData * Math.random()).toFixed(0)), timestamp: receptionTime }]
         });
         if (this.state.sendData) {
             try {
@@ -279,13 +279,13 @@ class SimuPage extends React.Component {
                         style={styles.icon_button}
                     >
                         <Image
-                            source={require('../assets/icons/settings-gears-white.png')}
+                            source={require('../assets/icons/settings_btn.png')}
                             style={styles.icon} />
-                        <View style={{ flex: 5 }}></View>
+                        <View style={{ flex: 10 }}></View>
                     </TouchableOpacity>
                     <View style={styles.textContainer}>
-                        <Text style={styles.textPM}>PM2.5 : {this.state.data[this.state.data.length - 1]?.PM25} µg/m³</Text>
-                        <Text style={styles.textPM}>PM1 : {this.state.data[this.state.data.length - 1]?.PM1} µg/m³</Text>
+                        <Text style={styles.textPM25}>PM2.5 : {this.state.data[this.state.data.length - 1]?.PM25} µg/m³</Text>
+                        <Text style={styles.textPM1}>PM1 : {this.state.data[this.state.data.length - 1]?.PM1} µg/m³</Text>
                     </View>
                     <View style={styles.chartContainer}>
                         {this.backToCurrent()}
@@ -412,26 +412,32 @@ const styles = StyleSheet.create({
         justifyContent: "center"
     },
     textContainer: {
-        flex: 2,
-        marginTop: 10
+        flex: 1,
+        marginTop: 0
     },
-    textPM: {
-        color: '#ffffff',
+    textPM25: {
+        color: '#80cc24',
         fontFamily: 'sharetech',
-        fontSize: 30,
+        fontSize: 23,
+        marginBottom: 0,
+        flex: 1
+    },
+    textPM1: {
+        color: '#eb9b34',
+        fontFamily: 'sharetech',
+        fontSize: 23,
         marginBottom: 0,
         flex: 1
     },
     icon: {
-        width: 70,
-        height: 70,
+        height: 25,
         flex: 1,
-        padding: 7
+        margin: -1
     },
     icon_button: {
         flex: 1,
         flexDirection: "row",
-        margin: 5
+        padding: 20
     }
 });
 
