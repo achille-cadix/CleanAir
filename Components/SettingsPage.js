@@ -78,8 +78,8 @@ class SettingsPage extends React.Component {
                 number: setting_number,
                 age: setting_age,
                 deviceName: setting_deviceName,
-                fixed_graph: setting_fixedGraph,
-                sendData: setting_sendData,
+                fixed_graph: String(setting_fixedGraph) == 'true',
+                sendData: String(setting_sendData) == 'true',
                 settings_loaded: true,
                 number_slider: setting_number,
                 age_slider: setting_age
@@ -152,7 +152,7 @@ class SettingsPage extends React.Component {
                                 <CheckBox
                                     style={{ color: "#ffffff" }}
                                     value={String(this.state.fixed_graph) == 'true'}
-                                    onValueChange={(value) => this.setState({ fixed_graph: value })}
+                                    onValueChange={(value) => this.setState({ fixed_graph: String(value) })}
                                 />
                             </View>
                             <View style={styles.container}>
@@ -162,7 +162,7 @@ class SettingsPage extends React.Component {
                                 <CheckBox
                                     style={{ color: "#ffffff" }}
                                     value={String(this.state.sendData) == 'true'}
-                                    onValueChange={(value) => this.setState({ sendData: value })}
+                                    onValueChange={(value) => this.setState({ sendData: String(value) })}
                                 />
                             </View>
                             <Text style={styles.textWhite}>

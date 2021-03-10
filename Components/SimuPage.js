@@ -40,7 +40,8 @@ class SimuPage extends React.Component {
             },
             autoPan: true,
             backGroundTask: null,
-            pause: false
+            pause: false,
+            maxYValue: 0
         }
         this.defaultValues = {
             "@setting_number": 15,
@@ -66,7 +67,8 @@ class SimuPage extends React.Component {
         this.setState({
             unansweredCalls: 0,
             valuesReceived: this.state.valuesReceived + 1,
-            data: [...this.state?.data, { x: this.state.valuesReceived, PM25: parseFloat(fakeData), PM1: parseFloat((fakeData * Math.random()).toFixed(0)), timestamp: receptionTime }]
+            data: [...this.state?.data, { x: this.state.valuesReceived, PM25: parseFloat(fakeData), PM1: parseFloat((fakeData * Math.random()).toFixed(0)), timestamp: receptionTime }],
+            maxYValue: parseFloat(fakeData) > this.state.maxYValue ? parseFloat(fakeData) : this.state.maxYValue
         });
         if (this.state.sendData) {
             try {
@@ -111,7 +113,7 @@ class SimuPage extends React.Component {
                 longitude: this.state.location.coords.longitude,
                 latitude: this.state.location.coords.latitude,
             };
-            console.log(body);
+            //console.log(body);
             axios({ method: 'post', url: url, data: body }).catch((e) => {
                 hideToasts();
                 Toast.showShortBottom("Could not send data to internet, please check your network");
@@ -164,8 +166,7 @@ class SimuPage extends React.Component {
     }
 
     handleZoomChange = (domain, maxRightZoom) => {
-        console.log(domain, maxRightZoom)
-        if (Math.abs(maxRightZoom.x[0] - domain.x[0]) < 1) { // Condition if both values are closed : engage magnetism
+        if (Math.abs(maxRightZoom.x[0] - domain.x[0]) < 1) { // Condition if both values are close : engage magnetism
             this.setState({
                 zoomDomain: maxRightZoom,
                 autoPan: true
@@ -173,7 +174,13 @@ class SimuPage extends React.Component {
                 console.log("locked")
         }
         else {
-            this.setState({ zoomDomain: domain, autoPan: false })
+            this.setState({
+                zoomDomain: {
+                    x: domain.x,
+                    y: maxRightZoom.y
+                },
+                autoPan: false
+            })
         }
     }
 
@@ -183,8 +190,9 @@ class SimuPage extends React.Component {
             valuesReceived: 1,
             number: number,
             age: age,
-            fixed_graph: fixed_graph,
-            sendData: sendData
+            fixed_graph: String(fixed_graph) == 'true',
+            sendData: String(sendData) == 'true',
+            maxYValue: 0
         });
         this.forceUpdate();
     }
@@ -226,7 +234,7 @@ class SimuPage extends React.Component {
         this.setState({
             backGroundTask: BackgroundTimer.setInterval(() => {
                 this.generateFakeData();
-            }, 500)
+            }, 1000)
         })
     }
 
@@ -241,7 +249,7 @@ class SimuPage extends React.Component {
                                 pause: false,
                                 backGroundTask: BackgroundTimer.setInterval(() => {
                                     this.generateFakeData();
-                                }, 2000)
+                                }, 500)
                             })
                         }
                     }
@@ -263,7 +271,6 @@ class SimuPage extends React.Component {
                                 pause: true,
                                 backGroundTask: null
                             });
-                            console.log(this.state)
                         }
                     }
                 >
@@ -313,8 +320,8 @@ class SimuPage extends React.Component {
                 this.state.data[this.state.data.length - 1]?.x > 20 ? this.state.data[this.state.data.length - 1]?.x - 20 : 0,
                 this.state.data[this.state.data.length - 1]?.x > 20 ? this.state.data[this.state.data.length - 1]?.x : 20
             ],
-            y: [0, 300]
-        }
+            y: this.state.fixed_graph ? [0, 300] : [0, this.state.maxYValue + 20]
+        };
         if (!this.state.settings_loaded) {
             return (
                 <ImageBackground style={styles.image} source={require('../assets/pictures/background_image.png')}>
@@ -352,12 +359,6 @@ class SimuPage extends React.Component {
                                     allowPan={this.state.data.length > 20}
                                     onZoomDomainChange={(domain) => { this.handleZoomChange(domain, maxRightZoom) }}
                                     zoomDomain={this.state.autoPan ? maxRightZoom : this.state.zoomDomain}
-                                /*zoomDomain={{
-                                    x: [
-                                        this.state.data[this.state.data.length - 1]?.x > 20 ? this.state.data[this.state.data.length - 1]?.x - 20 : 0,
-                                        this.state.data[this.state.data.length - 1]?.x > 20 ? this.state.data[this.state.data.length - 1]?.x : 20
-                                    ]
-                                }}*/
                                 />}
                         >
                             <VictoryAxis
@@ -395,14 +396,12 @@ class SimuPage extends React.Component {
                                 data={this.state.data}
                                 interpolation="natural"
                                 y="PM25"
-                                domain={{ y: this.state.fixed_graph ? [0, 300] : null }}
                                 style={{ data: { stroke: "#80cc24" } }}
                             />
                             <VictoryLine
                                 data={this.state.data}
                                 interpolation="natural"
                                 y="PM1"
-                                domain={{ y: this.state.fixed_graph ? [0, 300] : null }}
                                 style={{ data: { stroke: "#eb9b34" } }}
                             />
                         </VictoryChart >
