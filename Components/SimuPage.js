@@ -39,7 +39,8 @@ class SimuPage extends React.Component {
                 x: [0, 20], y: [0, 300]
             },
             autoPan: true,
-            backGroundTask: null
+            backGroundTask: null,
+            pause: false
         }
         this.defaultValues = {
             "@setting_number": 15,
@@ -225,32 +226,82 @@ class SimuPage extends React.Component {
         this.setState({
             backGroundTask: BackgroundTimer.setInterval(() => {
                 this.generateFakeData();
-            }, 2000)
+            }, 500)
         })
+    }
+
+    playPauseButton = () => {
+        if (this.state.pause) {
+            return (
+                <TouchableOpacity
+                    style={styles.playPauseButton}
+                    onPress={
+                        () => {
+                            this.setState({
+                                pause: false,
+                                backGroundTask: BackgroundTimer.setInterval(() => {
+                                    this.generateFakeData();
+                                }, 2000)
+                            })
+                        }
+                    }
+                >
+                    <Image
+                        source={require('../assets/icons/play_white.png')}
+                        style={styles.playPauseIcon} />
+                </TouchableOpacity>
+            )
+        }
+        else {
+            return (
+                <TouchableOpacity
+                    style={styles.playPauseButton}
+                    onPress={
+                        () => {
+                            BackgroundTimer.clearInterval(this.state.backGroundTask);
+                            this.setState({
+                                pause: true,
+                                backGroundTask: null
+                            });
+                            console.log(this.state)
+                        }
+                    }
+                >
+                    <Image
+                        source={require('../assets/icons/pause_white.png')}
+                        style={styles.playPauseIcon} />
+                </TouchableOpacity>
+            )
+        }
     }
 
     backToCurrent = () => {
         if (!this.state.autoPan) {
             return (
                 <TouchableOpacity
-                    style={styles.goBackButton_enabled}
+                    style={styles.backToCurrentButton}
                     onPress={
                         () => {
                             this.setState({ autoPan: true })
                         }
                     }
                 >
-                    <Text style={styles.goBackButtonText}>Return to current values</Text>
+                    <Image
+                        source={require('../assets/icons/next_white.png')}
+                        style={styles.backToCurrentIcon} />
                 </TouchableOpacity>
             )
         }
         else {
             return (
                 <View
-                    style={styles.goBackButton_disabled}
+                    style={styles.backToCurrentButton}
 
                 >
-                    <Text style={styles.goBackButtonText}>Live values displayed</Text>
+
+                    <Image
+                        source={require('../assets/icons/next_grey.png')}
+                        style={styles.backToCurrentIcon} />
                 </View>
             )
         }
@@ -288,7 +339,10 @@ class SimuPage extends React.Component {
                         <Text style={styles.textPM1}>PM1 : {this.state.data[this.state.data.length - 1]?.PM1} µg/m³</Text>
                     </View>
                     <View style={styles.chartContainer}>
-                        {this.backToCurrent()}
+                        <View style={styles.chartButtonsContainer}>
+                            {this.playPauseButton()}
+                            {this.backToCurrent()}
+                        </View>
                         <VictoryChart
                             style={styles.chart}
                             theme={VictoryTheme.material}
@@ -378,32 +432,27 @@ const styles = StyleSheet.create({
         alignItems: "flex-end"
     },
     chart: {
-        flex: 1
+        flex: 10
     },
-    goBackButton_enabled: {
-        width: 220,
-        height: 50,
-        justifyContent: "center",
-        backgroundColor: "#80cc24",
-        marginTop: 5,
-        marginBottom: -30,
-        marginRight: 20
+    playPauseButton: {
+        alignItems: 'flex-end'
     },
-    goBackButton_disabled: {
-        width: 220,
-        height: 50,
-        justifyContent: "center",
-        backgroundColor: "grey",
-        marginTop: 5,
-        marginBottom: -30,
-        marginRight: 20
+    playPauseIcon: {
+        flex: 1,
+        flexDirection: "row",
+        padding: 20,
+        width: 40,
+        marginRight: 10
     },
-    goBackButtonText: {
-        color: '#ffffff',
-        fontFamily: 'sharetech',
-        fontSize: 20,
-        padding: 2,
-        textAlign: "center"
+    backToCurrentButton: {
+        alignItems: 'flex-end'
+    },
+    backToCurrentIcon: {
+        flex: 1,
+        flexDirection: "row",
+        padding: 20,
+        width: 40,
+        marginRight: 50
     },
     textWhite: {
         color: '#ffffff',
@@ -438,6 +487,11 @@ const styles = StyleSheet.create({
         flex: 1,
         flexDirection: "row",
         padding: 20
+    },
+    chartButtonsContainer: {
+        flexDirection: "row",
+        alignContent: 'flex-end',
+        marginTop: 15
     }
 });
 
