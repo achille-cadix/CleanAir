@@ -120,7 +120,7 @@ class SettingsPage extends React.Component {
                                 style={styles.slider}
                                 onSlidingComplete={(value) => this.setState({ age_slider: value })}
                                 onValueChange={(value) => this.setState({ age: value })}
-                                minimumValue={5}
+                                minimumValue={20}
                                 maximumValue={60}
                                 step={1}
                             />

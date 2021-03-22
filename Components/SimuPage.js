@@ -174,13 +174,24 @@ class SimuPage extends React.Component {
                 console.log("locked")
         }
         else {
-            this.setState({
-                zoomDomain: {
-                    x: domain.x,
-                    y: maxRightZoom.y
-                },
-                autoPan: false
-            })
+            if (this.state.zoomDomain.x[0] >= 0) {
+                this.setState({
+                    zoomDomain: {
+                        x: domain.x,
+                        y: maxRightZoom.y
+                    },
+                    autoPan: false
+                })
+            }
+            else {
+                this.setState({
+                    zoomDomain: {
+                        x: [0, 20],
+                        y: maxRightZoom.y
+                    },
+                    autoPan: false
+                })
+            }
         }
     }
 
@@ -315,9 +326,10 @@ class SimuPage extends React.Component {
     }
 
     render() {
+        const earliestDataIndex = this.state.data[0]?.x ?? 0;
         const maxRightZoom = {
             x: [
-                this.state.data[this.state.data.length - 1]?.x > 20 ? this.state.data[this.state.data.length - 1]?.x - 20 : 0,
+                this.state.data[this.state.data.length - 1]?.x > 20 ? this.state.data[this.state.data.length - 1]?.x - 20 : earliestDataIndex,
                 this.state.data[this.state.data.length - 1]?.x > 20 ? this.state.data[this.state.data.length - 1]?.x : 20
             ],
             y: this.state.fixed_graph ? [0, 300] : [0, this.state.maxYValue + 20]
@@ -363,7 +375,7 @@ class SimuPage extends React.Component {
                         >
                             <VictoryAxis
                                 tickLabelComponent={<VictoryLabel dy={0} dx={10} angle={55} />}
-                                tickFormat={(x) => ''} // Values displayed on the X axis
+                                tickFormat={(x) => '' /*this.state.data[this.state.data.length - 1]?.x > 20 ? this.state.data[this.state.data.length - 1]?.x - x : x*/} // Values displayed on the X axis
                                 style={{
                                     axis: {
                                         stroke: 'white'  //CHANGE COLOR OF X-AXIS
@@ -405,6 +417,7 @@ class SimuPage extends React.Component {
                                 style={{ data: { stroke: "#eb9b34" } }}
                             />
                         </VictoryChart >
+                        <Text style={styles.textLegend}>20</Text>
                     </View>
                 </ImageBackground >
             )
@@ -476,6 +489,14 @@ const styles = StyleSheet.create({
         fontSize: 23,
         marginBottom: 0,
         flex: 1
+    },
+    textLegend: {
+        color: '#ffffff',
+        fontFamily: 'sharetech',
+        fontSize: 15,
+        justifyContent: "center",
+        marginRight: 44,
+        marginTop: -40
     },
     icon: {
         height: 25,
