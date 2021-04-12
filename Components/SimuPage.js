@@ -62,12 +62,12 @@ class SimuPage extends React.Component {
     }
 
     generateFakeData = async () => {
-        let fakeData = (Math.random() * 255).toFixed(0);
+        let fakeData = (Math.random() * 125).toFixed(0);
         let receptionTime = +new Date;
         this.setState({
             unansweredCalls: 0,
             valuesReceived: this.state.valuesReceived + 1,
-            data: [...this.state?.data, { x: this.state.valuesReceived, PM25: parseFloat(fakeData), PM1: parseFloat((fakeData * Math.random()).toFixed(0)), timestamp: receptionTime }],
+            data: [...this.state?.data, { x: this.state.valuesReceived, PM25: parseFloat(fakeData), PM1: parseFloat((fakeData * Math.random()).toFixed(0)), PM10: parseFloat((fakeData * (1 + Math.random())).toFixed(0)), timestamp: receptionTime }],
             maxYValue: parseFloat(fakeData) > this.state.maxYValue ? parseFloat(fakeData) : this.state.maxYValue
         });
         if (this.state.sendData) {
@@ -109,6 +109,7 @@ class SimuPage extends React.Component {
             let body = {
                 PM25: data.PM25,
                 PM1: data.PM1,
+                PM10: data.PM10,
                 timestamp: data.timestamp,
                 longitude: this.state.location.coords.longitude,
                 latitude: this.state.location.coords.latitude,
@@ -142,13 +143,16 @@ class SimuPage extends React.Component {
             }
             let cleanedPM25 = this.state.data.filter(x => { if (typeof (x.PM25) == 'number') { return x } });
             let cleanedPM1 = this.state.data.filter(x => { if (typeof (x.PM1) == 'number') { return x } });
+            let cleanedPM10 = this.state.data.filter(x => { if (typeof (x.PM10) == 'number') { return x } });
             let meanPM25 = cleanedPM25.reduce((acc, e) => (acc + e.PM25), 0) / cleanedPM25.length;
             let meanPM1 = cleanedPM1.reduce((acc, e) => (acc + e.PM1), 0) / cleanedPM1.length;
+            let meanPM10 = cleanedPM10.reduce((acc, e) => (acc + e.PM10), 0) / cleanedPM10.length;
             let timestamp = this.state.data[this.state.data.length - 1]?.timestamp;
             try {
                 let body = {
                     PM25Mean: meanPM25.toFixed(2),
                     PM1Mean: meanPM1.toFixed(2),
+                    PM10Mean: meanPM10.toFixed(2),
                     timestamp: timestamp,
                     longitude: this.state.location.coords.longitude,
                     latitude: this.state.location.coords.latitude,
@@ -356,6 +360,7 @@ class SimuPage extends React.Component {
                     <View style={styles.textContainer}>
                         <Text style={styles.textPM25}>PM2.5 : {this.state.data[this.state.data.length - 1]?.PM25} µg/m³</Text>
                         <Text style={styles.textPM1}>PM1 : {this.state.data[this.state.data.length - 1]?.PM1} µg/m³</Text>
+                        <Text style={styles.textPM10}>PM10 : {this.state.data[this.state.data.length - 1]?.PM10} µg/m³</Text>
                     </View>
                     <View style={styles.chartContainer}>
                         <View style={styles.chartButtonsContainer}>
@@ -415,6 +420,12 @@ class SimuPage extends React.Component {
                                 interpolation="natural"
                                 y="PM1"
                                 style={{ data: { stroke: "#eb9b34" } }}
+                            />
+                            <VictoryLine
+                                data={this.state.data}
+                                interpolation="natural"
+                                y="PM10"
+                                style={{ data: { stroke: "#c7c7c7" } }}
                             />
                         </VictoryChart >
                         <Text style={styles.textLegend}>20</Text>
@@ -485,6 +496,13 @@ const styles = StyleSheet.create({
     },
     textPM1: {
         color: '#eb9b34',
+        fontFamily: 'sharetech',
+        fontSize: 23,
+        marginBottom: 0,
+        flex: 1
+    },
+    textPM10: {
+        color: '#c7c7c7',
         fontFamily: 'sharetech',
         fontSize: 23,
         marginBottom: 0,
