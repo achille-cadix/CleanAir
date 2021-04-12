@@ -63,12 +63,13 @@ class SimuPage extends React.Component {
 
     generateFakeData = async () => {
         let fakeData = (Math.random() * 125).toFixed(0);
+        let fakePM10Data = fakeData * (1 + Math.random()).toFixed(0);
         let receptionTime = +new Date;
         this.setState({
             unansweredCalls: 0,
             valuesReceived: this.state.valuesReceived + 1,
-            data: [...this.state?.data, { x: this.state.valuesReceived, PM25: parseFloat(fakeData), PM1: parseFloat((fakeData * Math.random()).toFixed(0)), PM10: parseFloat((fakeData * (1 + Math.random())).toFixed(0)), timestamp: receptionTime }],
-            maxYValue: parseFloat(fakeData) > this.state.maxYValue ? parseFloat(fakeData) : this.state.maxYValue
+            data: [...this.state?.data, { x: this.state.valuesReceived, PM25: parseFloat(fakeData), PM1: parseFloat((fakeData * Math.random()).toFixed(0)), PM10: fakePM10Data, timestamp: receptionTime }],
+            maxYValue: parseFloat(fakePM10Data) > this.state.maxYValue ? parseFloat(fakePM10Data) : this.state.maxYValue
         });
         if (this.state.sendData) {
             try {
@@ -358,9 +359,9 @@ class SimuPage extends React.Component {
                         <View style={{ flex: 10 }}></View>
                     </TouchableOpacity>
                     <View style={styles.textContainer}>
+                        <Text style={styles.textPM10}>PM10 : {this.state.data[this.state.data.length - 1]?.PM10} µg/m³</Text>
                         <Text style={styles.textPM25}>PM2.5 : {this.state.data[this.state.data.length - 1]?.PM25} µg/m³</Text>
                         <Text style={styles.textPM1}>PM1 : {this.state.data[this.state.data.length - 1]?.PM1} µg/m³</Text>
-                        <Text style={styles.textPM10}>PM10 : {this.state.data[this.state.data.length - 1]?.PM10} µg/m³</Text>
                     </View>
                     <View style={styles.chartContainer}>
                         <View style={styles.chartButtonsContainer}>
