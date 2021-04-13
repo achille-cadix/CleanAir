@@ -1,6 +1,6 @@
 import React from 'react';
-import { StyleSheet, View, Text, Button, PermissionsAndroid, ImageBackground, BackHandler } from 'react-native';
-import { VictoryAxis, VictoryChart, VictoryTheme, VictoryLabel, VictoryLine } from "victory-native";
+import { StyleSheet, View, Text, Button, PermissionsAndroid, ImageBackground, BackHandler, TouchableOpacity, Image } from 'react-native';
+import { VictoryAxis, VictoryChart, VictoryTheme, VictoryLabel, VictoryLine, VictoryZoomContainer } from "victory-native";
 import Toast from "react-native-toast";
 import BluetoothSerial from "react-native-bluetooth-serial-next";
 import Geolocation from '@react-native-community/geolocation';
@@ -31,7 +31,8 @@ class ChartPage extends React.Component {
             number: 15,
             age: 30,
             unansweredCalls: 0,
-            fixed_graph: true
+            fixed_graph: true,
+            backGroundTask: null
         }
         this.defaultValues = { "@setting_number": 15, "@setting_age": 30, "@setting_deviceName": "HC-05", "@setting_fixedGraph": true, "@setting_sendData": true };
     }
@@ -132,6 +133,7 @@ class ChartPage extends React.Component {
                 timestamp: data.timestamp,
                 longitude: this.state.location.coords.longitude,
                 latitude: this.state.location.coords.latitude,
+                origin: "Bluetooth"
             };
             console.log(body);
             axios({ method: 'post', url: url, data: body });
@@ -160,6 +162,7 @@ class ChartPage extends React.Component {
                     timestamp: timestamp,
                     longitude: this.state.location.coords.longitude,
                     latitude: this.state.location.coords.latitude,
+                    origin: "Bluetooth"
                 };
                 console.log(body);
                 axios({ method: 'post', url: url, data: body });
@@ -194,6 +197,9 @@ class ChartPage extends React.Component {
 
     handleLeave = async () => {
         await this.disconnect(this.props.navigation.state.params.deviceID);
+        BackgroundTimer.clearInterval(this.state.backGroundTask);
+        this.setState({ backGroundTask: null });
+        this.backHandler.remove();
         console.log("back pressed");
         this.props.navigation.goBack();
     }
@@ -230,62 +236,78 @@ class ChartPage extends React.Component {
             });
         })
         this.requestDataFromHC05();
-        const intervalId = BackgroundTimer.setInterval(() => {
-            this.requestDataFromHC05();
-        }, 2000);
+        this.setState({
+            backGroundTask: BackgroundTimer.setInterval(() => {
+                this.requestDataFromHC05();
+            }, 2000)
+        })
     }
 
     render() {
         return (
             <ImageBackground style={styles.image} source={require('../assets/pictures/background_image.png')}>
-                <Text style={styles.textPM25}>PM2.5 : {this.state.data[this.state.data.length - 1]?.y} µg/m³</Text>
-                <VictoryChart style={styles.chart} theme={VictoryTheme.material}>
-                    <VictoryAxis
-                        tickLabelComponent={<VictoryLabel dy={0} dx={10} angle={55} />}
-                        tickFormat={(x) => ''} // Values displayed on the X axis
-                        style={{
-                            axis: {
-                                stroke: 'white'  //CHANGE COLOR OF X-AXIS
-                            },
-                            tickLabels: {
-                                fill: 'white' //CHANGE COLOR OF X-AXIS LABELS
-                            },
-                            grid: {
-                                stroke: 'none' //CHANGE COLOR OF X-AXIS GRID LINES
-                            }
-                        }}
-                    />
-                    <VictoryAxis
-                        dependentAxis
-                        tickFormat={(y) => y}
-                        style={{
-                            axis: {
-                                stroke: 'white'  //CHANGE COLOR OF Y-AXIS
-                            },
-                            tickLabels: {
-                                fill: 'white' //CHANGE COLOR OF Y-AXIS LABELS
-                            },
-                            grid: {
-                                stroke: 'white', //CHANGE COLOR OF Y-AXIS GRID LINES
-                                strokeDasharray: '7',
-                            }
-                        }}
-                    />
-                    <VictoryLine
-                        data={this.state.data}
-                        interpolation="natural"
-                        domain={{ y: this.state.fixed_graph ? [0, 300] : null }}
-                        style={{ data: { fill: "#80cc24" } }}
-
-                    />
-                </VictoryChart>
-                <Button
-                    title="Changer les paramètres"
-                    color="#80cc24"
-                    onPress={() => this.props.navigation.navigate("SettingsPage", { defaultValues: this.defaultValues, updateSettings: this.updateSettings })}
-                />
-                <Text style={styles.textWhite}>Age maximal des données : {this.state.age}</Text>
-                <Text style={styles.textWhite}>Envoi des données toutes les : {this.state.number}</Text>
+                <TouchableOpacity
+                    onPress={() => this.props.navigation.navigate("SettingsPage", { defaultValues: this.defaultValues, updateSettings: this.updateSettings, origin: "ChartPage" })}
+                    style={styles.icon_button}
+                >
+                    <Image
+                        source={require('../assets/icons/settings_btn.png')}
+                        style={styles.icon} />
+                    <View style={{ flex: 10 }}></View>
+                </TouchableOpacity>
+                <View style={styles.textContainer}>
+                    <Text style={styles.textPM25}>PM2.5 : {this.state.data[this.state.data.length - 1]?.y} µg/m³</Text>
+                </View>
+                <View style={styles.chartContainer}>
+                    <VictoryChart
+                        style={styles.chart}
+                        theme={VictoryTheme.material}
+                        containerComponent={
+                            <VictoryZoomContainer
+                                allowZoom={false}
+                                zoomDomain={{ y: [0, 300] }}
+                                disable={true}
+                                allowPan={this.state.data.length > 20}
+                            />}
+                    >
+                        <VictoryAxis
+                            tickLabelComponent={<VictoryLabel dy={0} dx={10} angle={55} />}
+                            tickFormat={(x) => '' /*this.state.data[this.state.data.length - 1]?.x > 20 ? this.state.data[this.state.data.length - 1]?.x - x : x*/} // Values displayed on the X axis
+                            style={{
+                                axis: {
+                                    stroke: 'white'  //CHANGE COLOR OF X-AXIS
+                                },
+                                tickLabels: {
+                                    fill: 'white' //CHANGE COLOR OF X-AXIS LABELS
+                                },
+                                grid: {
+                                    stroke: 'none' //CHANGE COLOR OF X-AXIS GRID LINES
+                                }
+                            }}
+                        />
+                        <VictoryAxis
+                            dependentAxis
+                            tickFormat={(y) => y}
+                            style={{
+                                axis: {
+                                    stroke: 'white'  //CHANGE COLOR OF Y-AXIS
+                                },
+                                tickLabels: {
+                                    fill: 'white' //CHANGE COLOR OF Y-AXIS LABELS
+                                },
+                                grid: {
+                                    stroke: 'white', //CHANGE COLOR OF Y-AXIS GRID LINES
+                                    strokeDasharray: '7',
+                                }
+                            }}
+                        />
+                        <VictoryLine
+                            data={this.state.data}
+                            interpolation="natural"
+                            style={{ data: { stroke: "#80cc24" } }}
+                        />
+                    </VictoryChart >
+                </View>
             </ImageBackground>
         )
     }
@@ -304,20 +326,73 @@ const styles = StyleSheet.create({
         alignItems: "center",
         backgroundColor: "#f5fcff"
     },
+    chartContainer: {
+        flex: 7,
+        flexDirection: "column",
+        alignItems: "flex-end"
+    },
     chart: {
+        flex: 10
+    },
+    playPauseButton: {
+        alignItems: 'flex-end'
+    },
+    playPauseIcon: {
         flex: 1,
+        flexDirection: "row",
+        padding: 20,
+        width: 40,
+        marginRight: 10
+    },
+    backToCurrentButton: {
+        alignItems: 'flex-end'
+    },
+    backToCurrentIcon: {
+        flex: 1,
+        flexDirection: "row",
+        padding: 20,
+        width: 40,
+        marginRight: 50
     },
     textWhite: {
         color: '#ffffff',
         fontFamily: 'sharetech',
         fontSize: 20,
-        padding: 10
+        justifyContent: "center"
+    },
+    textContainer: {
+        flex: 1,
+        marginTop: 0
     },
     textPM25: {
+        color: '#80cc24',
+        fontFamily: 'sharetech',
+        fontSize: 30,
+        marginBottom: 0,
+        flex: 1
+    },
+    textLegend: {
         color: '#ffffff',
         fontFamily: 'sharetech',
-        fontSize: 40,
-        padding: 10
+        fontSize: 15,
+        justifyContent: "center",
+        marginRight: 44,
+        marginTop: -40
+    },
+    icon: {
+        height: 25,
+        flex: 1,
+        margin: -1
+    },
+    icon_button: {
+        flex: 1,
+        flexDirection: "row",
+        padding: 20
+    },
+    chartButtonsContainer: {
+        flexDirection: "row",
+        alignContent: 'flex-end',
+        marginTop: 15
     }
 });
 

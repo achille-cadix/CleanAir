@@ -114,6 +114,7 @@ class SimuPage extends React.Component {
                 timestamp: data.timestamp,
                 longitude: this.state.location.coords.longitude,
                 latitude: this.state.location.coords.latitude,
+                origin: "Simulator"
             };
             //console.log(body);
             axios({ method: 'post', url: url, data: body }).catch((e) => {
